@@ -1,0 +1,11 @@
+# FastMCP 2.0 - The production-ready MCP framework
+fastmcp>=2.0.0
+
+# Core dependencies
+requests>=2.31.0
+
+# Testing requirements
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-html>=3.2.0
