@@ -1,6 +1,6 @@
-# MoSPI MCP Server - Production Ready with FastMCP 2.0
+# MoSPI MCP Server
 
-Production-ready MCP (Model Context Protocol) server for accessing MoSPI (Ministry of Statistics and Programme Implementation) data APIs. Built with **FastMCP 2.0** - the modern, production-ready MCP framework.
+Production-ready MCP (Model Context Protocol) server for accessing MoSPI (Ministry of Statistics and Programme Implementation) data APIs. Built with FastMCP 2.0.
 
 ## Features
 
@@ -128,39 +128,6 @@ docker run -d \
 - **Dockerfile**: Container definition using FastMCP CLI
 - **.github/workflows/deploy.yml**: CI/CD pipeline for auto-builds
 
-### FastMCP 2.0 Features
-
-```python
-from fastmcp import FastMCP
-
-# Simple initialization - no auth complexity needed
-mcp = FastMCP("MoSPI Data Server")
-
-# Tools are just decorated functions
-@mcp.tool
-def greet(name: str) -> str:
-    return f"Hello, {name}!"
-
-# Run with HTTP or stdio transport
-if __name__ == "__main__":
-    mcp.run(transport="http", port=8000)
-```
-
-**No more:**
-
-- ❌ Manual Uvicorn setup
-- ❌ `app = mcp.http_app()`
-- ❌ Complex auth configuration
-- ❌ Custom health check routes
-
-**FastMCP 2.0 provides:**
-
-- ✅ Built-in HTTP server
-- ✅ Automatic health checks at `/health`
-- ✅ Enterprise auth support (optional)
-- ✅ CLI tools for deployment
-- ✅ Production monitoring
-
 ## Available Tools
 
 The server provides 55+ MCP tools across 18 datasets. Each dataset has 3 tools:
@@ -200,17 +167,6 @@ fastmcp inspect mospi_server.py:mcp
 
 **Note:** FastMCP 2.0 has built-in auth support. For production deployments with authentication, use FastMCP Cloud or configure auth in your FastMCP server initialization.
 
-## Migration from FastMCP 1.0
-
-This server has been migrated from FastMCP 1.0 (MCP SDK) to FastMCP 2.0. Key changes:
-
-1. **Import**: `from fastmcp import FastMCP` (not `from mcp.server.fastmcp`)
-2. **No Uvicorn**: Use `mcp.run()` or FastMCP CLI instead
-3. **Simpler**: No manual auth setup, health checks, or ASGI app exports
-4. **Better**: More features, better DX, production-ready out of the box
-
-See [MIGRATION_NOTES.md](MIGRATION_NOTES.md) for detailed migration information.
-
 ## Development
 
 ### Project Structure
@@ -243,46 +199,6 @@ pytest
 # Run with auto-reload during development
 fastmcp dev mospi_server.py:mcp --transport http
 ```
-
-## Deployment Checklist
-
-- [ ] Code committed to GitHub repository
-- [ ] GitHub Actions workflow running successfully
-- [ ] Docker image builds without errors
-- [ ] Server tested locally with `python mospi_server.py`
-- [ ] Deployed to FastMCP Cloud or your preferred platform
-- [ ] Server accessible and responding to requests
-- [ ] All MCP tools working correctly
-
-## Handoff to MoSPI
-
-### Option A: FastMCP Cloud (Recommended)
-
-Provide MoSPI with:
-
-1. **Server URL**: `https://your-project.fastmcp.app/mcp`
-2. **Web Interface**: Direct access through FastMCP Cloud dashboard
-3. **Authentication**: Managed through FastMCP Cloud
-
-### Option B: Docker Image
-
-Provide MoSPI with:
-
-1. **Docker Image URL:**
-
-   ```
-   ghcr.io/YOUR_USERNAME/mospi-mcp-deployment:latest
-   ```
-
-2. **Run Command:**
-
-   ```bash
-   docker run -d \
-     -p 8000:8000 \
-     ghcr.io/YOUR_USERNAME/mospi-mcp-deployment:latest
-   ```
-
-3. **Access:** Server available at `http://localhost:8000/mcp`
 
 ## Resources
 
