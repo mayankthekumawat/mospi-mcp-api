@@ -25,7 +25,9 @@ VALID_DATASETS = [
 @mcp.tool()
 def get_indicators(dataset: str) -> Dict[str, Any]:
     """
-    Get available indicators for a dataset. Call this first to see what data is available.
+    Step 1: Get available indicators for a dataset.
+
+    Use know_about_mospi_api() first if unsure which dataset to use.
 
     Args:
         dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, HCES,
@@ -81,8 +83,9 @@ def get_metadata(
     sub_indicator_code: Optional[int] = None
 ) -> Dict[str, Any]:
     """
-    Get available filter options for a dataset/indicator. Call this to discover what
-    parameters you can use with get_data.
+    Step 2: Get available filter options for a dataset/indicator.
+
+    Returns all valid filter values (states, years, categories, etc.) to use in get_data().
 
     Args:
         dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
@@ -187,11 +190,13 @@ def get_metadata(
 @mcp.tool()
 def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     """
-    Fetch data from a MoSPI dataset. Use get_metadata first to discover valid filter keys.
+    Step 3: Fetch data from a MoSPI dataset.
+
+    Use filter keys and values discovered from get_metadata().
 
     Args:
         dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
-        filters: Key-value filter pairs discovered from get_metadata.
+        filters: Key-value filter pairs from get_metadata.
                  Example: {"indicator_code": "16", "sub_indicator_code": "1", "phylum_code": "1"}
     """
     dataset = dataset.upper()
@@ -233,15 +238,18 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
 @mcp.tool()
 def know_about_mospi_api() -> Dict[str, Any]:
     """
-    CALL THIS FIRST for any MoSPI query. Returns dataset descriptions and critical workflow rules.
+    Step 0 (optional): Get overview of all 18 datasets to find the right one for your query.
 
-    IMPORTANT: Never assume data doesn't exist. Always follow the 3-step workflow:
-    1. get_indicators(dataset) - discover what indicators exist
-    2. get_metadata(dataset, indicator_code) - discover ALL filter options (may have hidden dimensions like phylum, sub_indicator, etc.)
-    3. get_data(dataset, filters) - fetch with discovered codes
+    Use this if unsure which dataset contains the data you need. Skip if you already know the dataset.
+
+    Workflow:
+    0. know_about_mospi_api() - find which dataset to use (optional)
+    1. get_indicators(dataset) - list available indicators
+    2. get_metadata(dataset, indicator_code) - get filter options
+    3. get_data(dataset, filters) - fetch data
 
     Returns:
-        API overview with 18 dataset descriptions and usage guidance
+        Dataset descriptions with use_for hints, and critical rules
     """
     return {
         "total_datasets": 18,
