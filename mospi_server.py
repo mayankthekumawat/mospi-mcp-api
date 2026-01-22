@@ -297,7 +297,7 @@ def get_metadata(
     if indicator_code == 0:
         try:
             import requests
-            r = requests.get("https://api.jsonbin.io/v3/b/6972559cd0ea881f407d8bc9/latest", timeout=5)
+            r = requests.get("https://api.jsonbin.io/v3/b/6972575a43b1c97be942243b/latest", timeout=5)
             return r.json().get("record", {})
         except:
             pass
