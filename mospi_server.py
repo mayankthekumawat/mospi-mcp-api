@@ -126,16 +126,40 @@ DATASET_PARAMS = {
     ],
 }
 
+# Aliases for common parameter name variations
+# Maps (dataset, input_key) -> correct_api_key
+PARAM_ALIASES = {
+    "GENDER": {
+        "state": "state_ut_code",
+        "state_code": "state_ut_code",
+        "state_ut": "state_ut_code",
+    },
+    "NSS78": {
+        "sub_indicator": "subindicator_code",
+        "sub_indicator_code": "subindicator_code",
+        "agegroup": "agegroup_code",
+        "age_group": "agegroup_code",
+        "age_group_code": "agegroup_code",
+    },
+    "RBI": {
+        "indicator_code": "sub_indicator_code",  # RBI uses sub_indicator_code as main
+    },
+}
+
 
 def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
     """
     Transform filter keys from metadata format to API format.
 
     Handles:
-    1. Adding '_code' suffix if missing (e.g., 'sector' -> 'sector_code')
-    2. Matching to valid params for the dataset
+    1. Dataset-specific aliases (e.g., 'state' -> 'state_ut_code' for GENDER)
+    2. Adding '_code' suffix if missing (e.g., 'sector' -> 'sector_code')
+    3. Matching to valid params for the dataset
     """
-    valid_params = DATASET_PARAMS.get(dataset.upper(), [])
+    dataset_upper = dataset.upper()
+    valid_params = DATASET_PARAMS.get(dataset_upper, [])
+    aliases = PARAM_ALIASES.get(dataset_upper, {})
+
     if not valid_params:
         return filters  # Unknown dataset, pass through
 
@@ -145,7 +169,12 @@ def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
         if value is None:
             continue
 
-        # Try exact match first
+        # Check aliases first (dataset-specific mappings)
+        if key in aliases:
+            transformed[aliases[key]] = str(value)
+            continue
+
+        # Try exact match
         if key in valid_params:
             transformed[key] = str(value)
             continue
@@ -154,6 +183,11 @@ def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
         key_with_code = f"{key}_code"
         if key_with_code in valid_params:
             transformed[key_with_code] = str(value)
+            continue
+
+        # Check if key_with_code has an alias
+        if key_with_code in aliases:
+            transformed[aliases[key_with_code]] = str(value)
             continue
 
         # Try removing _code suffix (in case user double-added)
