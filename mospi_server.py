@@ -22,17 +22,166 @@ VALID_DATASETS = [
     "ENVSTATS", "AISHE", "CPIALRL"
 ]
 
+# Valid API parameters for each dataset (extracted from deprecated dataset files)
+# These are the EXACT param names the API expects
+DATASET_PARAMS = {
+    "PLFS": [
+        "indicator_code", "frequency_code", "year", "page", "limit", "Format",
+        "state_code", "sector_code", "gender_code", "age_code", "weekly_status_code",
+        "religion_code", "social_category_code", "education_code", "broad_industry_work_code",
+        "broad_status_employment_code", "employee_contract_code", "enterprise_size_code",
+        "enterprise_type_code", "industry_section_code", "nco_division_code", "nic_group_code",
+        "quarter_code", "month_code"
+    ],
+    "CPI": [
+        "base_year", "series", "year", "month_code", "state_code", "group_code",
+        "subgroup_code", "sector_code", "item_code", "limit", "Format"
+    ],
+    "CPI_GROUP": [
+        "base_year", "series", "year", "month_code", "state_code", "group_code",
+        "subgroup_code", "sector_code", "limit", "Format"
+    ],
+    "CPI_ITEM": [
+        "base_year", "year", "month_code", "item_code", "limit", "Format"
+    ],
+    "IIP": [
+        "base_year", "financial_year", "year", "month_code", "category_code",
+        "subcategory_code", "limit", "type", "Format"
+    ],
+    "IIP_ANNUAL": [
+        "base_year", "financial_year", "category_code", "subcategory_code", "limit", "type", "Format"
+    ],
+    "IIP_MONTHLY": [
+        "base_year", "year", "month_code", "category_code", "subcategory_code", "limit", "type", "Format"
+    ],
+    "ASI": [
+        "classification_year", "sector_code", "year", "indicator_code", "state_code",
+        "nic_code", "limit", "nic_type", "Format"
+    ],
+    "NAS": [
+        "series", "frequency_code", "year", "indicator_code", "quarterly_code",
+        "approach_code", "revision_code", "institutional_code", "industry_code",
+        "subindustry_code", "limit", "page", "Format"
+    ],
+    "WPI": [
+        "year", "month_code", "major_group_code", "group_code", "sub_group_code",
+        "sub_sub_group_code", "item_code", "limit", "Format"
+    ],
+    "ENERGY": [
+        "indicator_code", "use_of_energy_balance_code", "year", "energy_commodities_code",
+        "energy_sub_commodities_code", "end_use_sector_code", "end_use_sub_sector_code",
+        "limit", "page", "Format"
+    ],
+    "HCES": [
+        "indicator_code", "year", "sub_indicator_code", "state_code", "sector_code",
+        "imputation_type_code", "mpce_fractile_classes_code", "item_category_code",
+        "cereal_code", "employment_of_households_code", "social_group_code", "page", "Format"
+    ],
+    "NSS78": [
+        "indicator_code", "state_code", "sector_code", "gender_code", "agegroup_code",
+        "internetaccess_code", "household_leavingreason_code", "subindicator_code",
+        "households_code", "sourceoffinance_code", "page", "limit", "Format"
+    ],
+    "NSS77": [
+        "indicator_code", "state_code", "visit_code", "land_possessed_household_code",
+        "agricultural_household_code", "caste_code", "season_code", "sub_indicator_code",
+        "social_group_code", "size_class_code", "page", "limit", "Format"
+    ],
+    "TUS": [
+        "indicator_code", "year", "state_code", "sector_code", "gender_code",
+        "age_group_code", "icatus_activity_code", "day_of_week_code", "page", "limit", "Format"
+    ],
+    "NFHS": [
+        "indicator_code", "state_code", "sub_indicator_code", "sector_code",
+        "survey_code", "page", "limit", "Format"
+    ],
+    "ASUSE": [
+        "indicator_code", "frequency_code", "year", "state_code", "sector_code",
+        "activity_code", "establishment_type_code", "broad_activity_category_code",
+        "sub_indicator_code", "owner_education_level_code", "location_establishment_code",
+        "operation_duration_code", "page", "limit", "Format"
+    ],
+    "GENDER": [
+        "indicator_code", "year", "sector_code", "gender_code", "state_ut_code",
+        "age_group_code", "sub_indicator_code", "crime_head_code", "page", "limit", "Format"
+    ],
+    "RBI": [
+        "sub_indicator_code", "year", "month_code", "quarter_code", "country_group_code",
+        "country_code", "trade_type_code", "currency_code", "reserve_type_code",
+        "reserve_currency_code", "indicator_code", "page", "limit", "Format"
+    ],
+    "ENVSTATS": [
+        "indicator_code", "year", "state_code", "sub_indicator_code", "season_code",
+        "month_code", "city_code", "parameter_code", "forest_type_code", "phylum_code",
+        "disaster_type_code", "river_length_code", "sub_basin_code", "page", "limit", "Format"
+    ],
+    "AISHE": [
+        "indicator_code", "year", "state_code", "sub_indicator_code", "university_type_code",
+        "college_type_code", "social_group_code", "gender_code", "level_code",
+        "page", "limit", "Format"
+    ],
+    "CPIALRL": [
+        "indicator_code", "base_year", "year", "month_code", "state_code",
+        "group_code", "page", "limit", "Format"
+    ],
+}
+
+
+def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
+    """
+    Transform filter keys from metadata format to API format.
+
+    Handles:
+    1. Adding '_code' suffix if missing (e.g., 'sector' -> 'sector_code')
+    2. Matching to valid params for the dataset
+    """
+    valid_params = DATASET_PARAMS.get(dataset.upper(), [])
+    if not valid_params:
+        return filters  # Unknown dataset, pass through
+
+    transformed = {}
+    for key, value in filters.items():
+        # Skip None values
+        if value is None:
+            continue
+
+        # Try exact match first
+        if key in valid_params:
+            transformed[key] = str(value)
+            continue
+
+        # Try adding _code suffix
+        key_with_code = f"{key}_code"
+        if key_with_code in valid_params:
+            transformed[key_with_code] = str(value)
+            continue
+
+        # Try removing _code suffix (in case user double-added)
+        if key.endswith('_code'):
+            key_without_code = key[:-5]
+            if key_without_code in valid_params:
+                transformed[key_without_code] = str(value)
+                continue
+
+        # No match found - pass through anyway (API will handle the error)
+        transformed[key] = str(value)
+
+    return transformed
+
+
 @mcp.tool()
 def get_indicators(dataset: str) -> Dict[str, Any]:
     """
     Step 1: Get available indicators for a dataset.
 
+    ⚠️ ALWAYS call this before saying data doesn't exist. Datasets contain more than their names suggest.
+
     Use know_about_mospi_api() first if unsure which dataset to use.
 
-    IMPORTANT - Guide the user:
-    - Show the user relevant indicators from the response
-    - If multiple indicators match their query, ask which one they want
-    - Help them pick the right indicator_code for the next step
+    IMPORTANT:
+    - If query is specific, pick the matching indicator and proceed to get_metadata
+    - Only ask user to choose if multiple indicators could match their query
+    - Do NOT ask for confirmation if the right indicator is obvious
 
     Args:
         dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, HCES,
@@ -92,11 +241,10 @@ def get_metadata(
 
     Returns all valid filter values (states, years, categories, etc.) to use in get_data().
 
-    IMPORTANT - Guide the user:
-    - Show the user what filters are AVAILABLE (states, years, sectors, etc.)
-    - If user asked for a breakdown that's not available, tell them: "X breakdown is not available, but Y and Z are"
-    - Ask user to specify: state, year, or other relevant filters before fetching data
-    - Use the filter codes from this response in get_data()
+    CRITICAL:
+    - Always call this to understand what filters are available. NEVER guess.
+    - Only ask for missing filters if genuinely needed
+    - If user asked for a breakdown that's not available, tell them what IS available
 
     Args:
         dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
@@ -203,14 +351,30 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     """
     Step 3: Fetch data from a MoSPI dataset.
 
-    Use filter keys and values discovered from get_metadata().
+    ⚠️ CRITICAL: Call get_metadata() first to get valid filter keys and values.
+
+    Filter format:
+    - Use 'id' values from metadata (e.g., "103" not "Dams")
+    - Keys are auto-transformed (e.g., 'sector' -> 'sector_code' if needed)
 
     Args:
         dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
-        filters: Key-value filter pairs from get_metadata.
-                 Example: {"indicator_code": "16", "sub_indicator_code": "1", "phylum_code": "1"}
+        filters: Key-value pairs from get_metadata(). Use 'id' values as strings.
     """
     dataset = dataset.upper()
+
+    # Auto-route CPI and IIP based on filters provided
+    if dataset == "CPI":
+        if "item_code" in filters or "item" in filters:
+            dataset = "CPI_ITEM"
+        else:
+            dataset = "CPI_GROUP"
+
+    if dataset == "IIP":
+        if "month_code" in filters or "month" in filters:
+            dataset = "IIP_MONTHLY"
+        else:
+            dataset = "IIP_ANNUAL"
 
     # Map friendly names to API dataset keys
     dataset_map = {
@@ -218,10 +382,8 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
         "GENDER": "GENDER",
         "CPI_GROUP": "CPI_Group",
         "CPI_ITEM": "CPI_Item",
-        "CPI": "CPI_Group",  # Default CPI to Group
         "IIP_ANNUAL": "IIP_Annual",
         "IIP_MONTHLY": "IIP_Monthly",
-        "IIP": "IIP_Annual",  # Default IIP to Annual
         "PLFS": "PLFS",
         "ASI": "ASI",
         "NAS": "NAS",
@@ -242,7 +404,10 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     if not api_dataset:
         return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
 
-    return mospi.get_data(api_dataset, filters)
+    # Transform filter keys to match API expectations
+    transformed_filters = transform_filters(dataset, filters)
+
+    return mospi.get_data(api_dataset, transformed_filters)
 
 
 # Mapping of dataset names to product_ids for metadata API
@@ -325,15 +490,19 @@ def get_dataset_info(dataset: str) -> Dict[str, Any]:
 @mcp.tool()
 def know_about_mospi_api() -> Dict[str, Any]:
     """
-    Step 0 (optional): Get overview of all 18 datasets to find the right one for your query.
+    Step 0 : Get overview of all 18 datasets to find the right one for your query.
 
     Use this if unsure which dataset contains the data you need. Skip if you already know the dataset.
 
-    IMPORTANT - Guide the user:
-    - If query is vague (e.g., "inflation data"), ask: "Which type? CPI (consumer) or WPI (wholesale)?"
-    - If location not specified, ask: "For which state? Or all of India?"
-    - If time period not specified, ask: "For which year?"
-    - Always confirm what the user wants before fetching data.
+    ⚠️ CRITICAL: NEVER assume data doesn't exist based on your prior knowledge.
+    MoSPI contains surprising data (e.g., global biodiversity/species counts in ENVSTATS).
+    ALWAYS call get_indicators() and get_metadata() to verify before saying "not available".
+
+    IMPORTANT - When to ask vs when to fetch:
+    - VAGUE query (e.g., "inflation data") → ask: "Which type? CPI (consumer) or WPI (wholesale)?"
+    - SPECIFIC query (e.g., "male population trend 1981") → just fetch the data directly, don't ask for confirmation
+    - Only ask for clarification if info is genuinely missing (state, year, indicator unclear)
+    - Do NOT ask "Shall I proceed?" if the query is already specific enough
 
     Workflow:
     0. know_about_mospi_api() - find which dataset to use (optional)
@@ -424,8 +593,8 @@ def know_about_mospi_api() -> Dict[str, Any]:
             },
             "EnvStats": {
                 "name": "Environment Statistics",
-                "description": "124 indicators on air/water quality, forest cover, waste, biodiversity, climate, environmental expenditure",
-                "use_for": "Pollution, forests, climate data, environmental indicators"
+                "description": "124 indicators including air/water quality, forest cover, waste, GLOBAL BIODIVERSITY (faunal species counts by phylum - protozoa, mammals, birds, reptiles, etc.), climate, environmental expenditure",
+                "use_for": "Pollution, forests, climate data, environmental indicators, SPECIES COUNTS (including world totals)"
             },
             "AISHE": {
                 "name": "All India Survey on Higher Education",
@@ -444,8 +613,10 @@ def know_about_mospi_api() -> Dict[str, Any]:
             "3. get_data(dataset, filters) → fetch data with filters dict from step 2"
         ],
         "critical_rules": [
-            "NEVER assume data doesn't exist - ALWAYS check indicators and metadata first",
-            "NEVER say 'not available' without calling get_indicators() and get_metadata()",
+            "⚠️ CRITICAL: NEVER assume data doesn't exist based on dataset names or your prior knowledge",
+            "⚠️ CRITICAL: ALWAYS call get_indicators() and get_metadata() before saying 'not available' or 'doesn't exist'",
+            "⚠️ CRITICAL: MoSPI contains surprising data - e.g., ENVSTATS has GLOBAL biodiversity counts (protozoa, mammals, etc.) under indicator 16",
+            "Datasets contain more than their names suggest - ALWAYS explore with get_indicators() first",
             "Metadata reveals hidden dimensions (e.g., ENVSTATS indicator 16 has phylum filter with PROTOZOA, MAMMALIA, etc.)",
             "State codes DIFFER across datasets (e.g., Maharashtra=27 in PLFS, =15 in CPI) - always check metadata",
             "Different indicators have different filters - some have sub_indicator, phylum, crime_head, etc.",
