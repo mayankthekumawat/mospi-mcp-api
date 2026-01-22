@@ -207,15 +207,6 @@ fastmcp dev mospi_server.py:mcp --transport http
 - **Model Context Protocol**: https://modelcontextprotocol.io
 - **MoSPI Open APIs**: https://api.mospi.gov.in
 
-## Support
-
-For issues or questions:
-
-1. Check the [FastMCP documentation](https://gofastmcp.com)
-2. Review [MIGRATION_NOTES.md](MIGRATION_NOTES.md) for FastMCP 2.0 changes
-3. Test locally with `python mospi_server.py`
-4. Check GitHub Actions logs for CI/CD issues
-
 ## License
 
 This project provides an interface to MoSPI's public APIs. Refer to MoSPI's terms of service for data usage guidelines.
@@ -229,6 +220,6 @@ This project provides an interface to MoSPI's public APIs. Refer to MoSPI's term
 
 ### Acknowledgments
 
-Special thanks to the **Ministry of Statistics and Programme Implementation (MoSPI)** for providing open APIs that make this data accessible to all.
+Special thanks to the **Ministry of Statistics and Programme Implementation (MoSPI)** for providing open APIs and **Bharat Digital** to coordinate the creation of the MCP that makes this data accessible to all.
 
 ---
