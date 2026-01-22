@@ -29,6 +29,11 @@ def get_indicators(dataset: str) -> Dict[str, Any]:
 
     Use know_about_mospi_api() first if unsure which dataset to use.
 
+    IMPORTANT - Guide the user:
+    - Show the user relevant indicators from the response
+    - If multiple indicators match their query, ask which one they want
+    - Help them pick the right indicator_code for the next step
+
     Args:
         dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, HCES,
                  NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
@@ -86,6 +91,12 @@ def get_metadata(
     Step 2: Get available filter options for a dataset/indicator.
 
     Returns all valid filter values (states, years, categories, etc.) to use in get_data().
+
+    IMPORTANT - Guide the user:
+    - Show the user what filters are AVAILABLE (states, years, sectors, etc.)
+    - If user asked for a breakdown that's not available, tell them: "X breakdown is not available, but Y and Z are"
+    - Ask user to specify: state, year, or other relevant filters before fetching data
+    - Use the filter codes from this response in get_data()
 
     Args:
         dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
@@ -234,6 +245,82 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     return mospi.get_data(api_dataset, filters)
 
 
+# Mapping of dataset names to product_ids for metadata API
+DATASET_PRODUCT_IDS = {
+    "PLFS": "plfs",
+    "CPI": "cpi",
+    "IIP": "iip",
+    "ASI": "asi",
+    "NAS": "nas",
+    "WPI": "wpi",
+    "HCES": "hces",
+    "NSS78": "nss78",
+    "NSS77": "nss77",
+    "TUS": "tus",
+    "NFHS": "nfhs",
+    "ASUSE": "asuse",
+    "GENDER": "gender",
+    "RBI": "rbi",
+    "AISHE": "aishe",
+    "CPIALRL": "cpialrl",
+    "ENVSTATS": "envstat",
+    "ENERGY": "esi",
+}
+
+
+@mcp.tool()
+def get_dataset_info(dataset: str) -> Dict[str, Any]:
+    """
+    Get detailed information about a dataset - description, data source, time period, geography, etc.
+
+    ONLY call this when user explicitly asks for dataset information like:
+    - "What is PLFS?"
+    - "Tell me about this dataset"
+    - "What's the data source?"
+    - "What time period does it cover?"
+
+    Do NOT call this as part of the normal data fetching workflow.
+
+    Args:
+        dataset: Dataset name (PLFS, CPI, GENDER, ENVSTATS, etc.)
+    """
+    import requests
+
+    dataset = dataset.upper()
+    product_id = DATASET_PRODUCT_IDS.get(dataset)
+
+    if not product_id:
+        return {"error": f"Unknown dataset: {dataset}", "valid_datasets": list(DATASET_PRODUCT_IDS.keys())}
+
+    try:
+        response = requests.get(
+            "https://api.mospi.gov.in/api/esankhyiki/cms/getMetaDataByProduct",
+            params={"product_id": product_id},
+            timeout=30
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get("data") and len(data["data"]) > 0:
+            info = data["data"][0]
+            return {
+                "dataset": dataset,
+                "name": info.get("product"),
+                "description": info.get("description"),
+                "category": info.get("category"),
+                "geography": info.get("geography"),
+                "frequency": info.get("frequency"),
+                "time_period": info.get("time_period"),
+                "data_source": info.get("data_source"),
+                "documentation": info.get("swagger_link") or "Not available"
+            }
+        else:
+            return {"error": "No metadata found for this dataset", "dataset": dataset}
+
+    except Exception as e:
+        return {"error": f"Failed to fetch dataset info: {str(e)}"}
+
+
 # Comprehensive API documentation tool
 @mcp.tool()
 def know_about_mospi_api() -> Dict[str, Any]:
@@ -241,6 +328,12 @@ def know_about_mospi_api() -> Dict[str, Any]:
     Step 0 (optional): Get overview of all 18 datasets to find the right one for your query.
 
     Use this if unsure which dataset contains the data you need. Skip if you already know the dataset.
+
+    IMPORTANT - Guide the user:
+    - If query is vague (e.g., "inflation data"), ask: "Which type? CPI (consumer) or WPI (wholesale)?"
+    - If location not specified, ask: "For which state? Or all of India?"
+    - If time period not specified, ask: "For which year?"
+    - Always confirm what the user wants before fetching data.
 
     Workflow:
     0. know_about_mospi_api() - find which dataset to use (optional)
