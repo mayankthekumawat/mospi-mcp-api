@@ -1,574 +1,671 @@
-import os
 import sys
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from fastmcp import FastMCP
-# Register dataset tools from modules
-from mospi.datasets import register_plfs_tools, register_cpi_tools, register_iip_tools, register_asi_tools, register_nas_tools, register_wpi_tools, register_energy_tools, register_hces_tools, register_nss78_tools, register_tus_tools, register_nfhs_tools, register_asuse_tools, register_gender_tools, register_rbi_tools, register_envstats_tools, register_aishe_tools, register_cpialrl_tools, register_nss77_tools
+from mospi.client import mospi
 
 
 def log(msg: str):
     """Print to stderr to avoid interfering with stdio transport"""
     print(msg, file=sys.stderr)
 
-# No Auth Setup
-auth_provider = None
-
-# Initialize FastMCP server with optional authentication
-mcp = FastMCP("MoSPI Data Server", auth=auth_provider)
+# Initialize FastMCP server
+mcp = FastMCP("MoSPI Data Server")
 
 
-register_plfs_tools(mcp)
-register_cpi_tools(mcp)
-register_iip_tools(mcp)
-register_asi_tools(mcp)
-register_nas_tools(mcp)
-register_wpi_tools(mcp)
-register_energy_tools(mcp)
-register_hces_tools(mcp)
-register_nss78_tools(mcp)
-register_tus_tools(mcp)
-register_nfhs_tools(mcp)
-register_asuse_tools(mcp)
-register_gender_tools(mcp)
-register_rbi_tools(mcp)
-register_envstats_tools(mcp)
-register_aishe_tools(mcp)
-register_cpialrl_tools(mcp)
-register_nss77_tools(mcp)
+# =============================================================================
+# Generic Tools
+# =============================================================================
+
+VALID_DATASETS = [
+    "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY", "HCES",
+    "NSS78", "NSS77", "TUS", "NFHS", "ASUSE", "GENDER", "RBI",
+    "ENVSTATS", "AISHE", "CPIALRL"
+]
+
+# Valid API parameters for each dataset (extracted from deprecated dataset files)
+# These are the EXACT param names the API expects
+DATASET_PARAMS = {
+    "PLFS": [
+        "indicator_code", "frequency_code", "year", "page", "limit", "Format",
+        "state_code", "sector_code", "gender_code", "age_code", "weekly_status_code",
+        "religion_code", "social_category_code", "education_code", "broad_industry_work_code",
+        "broad_status_employment_code", "employee_contract_code", "enterprise_size_code",
+        "enterprise_type_code", "industry_section_code", "nco_division_code", "nic_group_code",
+        "quarter_code", "month_code"
+    ],
+    "CPI": [
+        "base_year", "series", "year", "month_code", "state_code", "group_code",
+        "subgroup_code", "sector_code", "item_code", "limit", "Format"
+    ],
+    "CPI_GROUP": [
+        "base_year", "series", "year", "month_code", "state_code", "group_code",
+        "subgroup_code", "sector_code", "limit", "Format"
+    ],
+    "CPI_ITEM": [
+        "base_year", "year", "month_code", "item_code", "limit", "Format"
+    ],
+    "IIP": [
+        "base_year", "financial_year", "year", "month_code", "category_code",
+        "subcategory_code", "limit", "type", "Format"
+    ],
+    "IIP_ANNUAL": [
+        "base_year", "financial_year", "category_code", "subcategory_code", "limit", "type", "Format"
+    ],
+    "IIP_MONTHLY": [
+        "base_year", "year", "month_code", "category_code", "subcategory_code", "limit", "type", "Format"
+    ],
+    "ASI": [
+        "classification_year", "sector_code", "year", "indicator_code", "state_code",
+        "nic_code", "limit", "nic_type", "Format"
+    ],
+    "NAS": [
+        "series", "frequency_code", "year", "indicator_code", "quarterly_code",
+        "approach_code", "revision_code", "institutional_code", "industry_code",
+        "subindustry_code", "limit", "page", "Format"
+    ],
+    "WPI": [
+        "year", "month_code", "major_group_code", "group_code", "sub_group_code",
+        "sub_sub_group_code", "item_code", "limit", "Format"
+    ],
+    "ENERGY": [
+        "indicator_code", "use_of_energy_balance_code", "year", "energy_commodities_code",
+        "energy_sub_commodities_code", "end_use_sector_code", "end_use_sub_sector_code",
+        "limit", "page", "Format"
+    ],
+    "HCES": [
+        "indicator_code", "year", "sub_indicator_code", "state_code", "sector_code",
+        "imputation_type_code", "mpce_fractile_classes_code", "item_category_code",
+        "cereal_code", "employment_of_households_code", "social_group_code", "page", "Format"
+    ],
+    "NSS78": [
+        "indicator_code", "state_code", "sector_code", "gender_code", "agegroup_code",
+        "internetaccess_code", "household_leavingreason_code", "subindicator_code",
+        "households_code", "sourceoffinance_code", "page", "limit", "Format"
+    ],
+    "NSS77": [
+        "indicator_code", "state_code", "visit_code", "land_possessed_household_code",
+        "agricultural_household_code", "caste_code", "season_code", "sub_indicator_code",
+        "social_group_code", "size_class_code", "page", "limit", "Format"
+    ],
+    "TUS": [
+        "indicator_code", "year", "state_code", "sector_code", "gender_code",
+        "age_group_code", "icatus_activity_code", "day_of_week_code", "page", "limit", "Format"
+    ],
+    "NFHS": [
+        "indicator_code", "state_code", "sub_indicator_code", "sector_code",
+        "survey_code", "page", "limit", "Format"
+    ],
+    "ASUSE": [
+        "indicator_code", "frequency_code", "year", "state_code", "sector_code",
+        "activity_code", "establishment_type_code", "broad_activity_category_code",
+        "sub_indicator_code", "owner_education_level_code", "location_establishment_code",
+        "operation_duration_code", "page", "limit", "Format"
+    ],
+    "GENDER": [
+        "indicator_code", "year", "sector_code", "gender_code", "state_ut_code",
+        "age_group_code", "sub_indicator_code", "crime_head_code", "page", "limit", "Format"
+    ],
+    "RBI": [
+        "sub_indicator_code", "year", "month_code", "quarter_code", "country_group_code",
+        "country_code", "trade_type_code", "currency_code", "reserve_type_code",
+        "reserve_currency_code", "indicator_code", "page", "limit", "Format"
+    ],
+    "ENVSTATS": [
+        "indicator_code", "year", "state_code", "sub_indicator_code", "season_code",
+        "month_code", "city_code", "parameter_code", "forest_type_code", "phylum_code",
+        "disaster_type_code", "river_length_code", "sub_basin_code", "page", "limit", "Format"
+    ],
+    "AISHE": [
+        "indicator_code", "year", "state_code", "sub_indicator_code", "university_type_code",
+        "college_type_code", "social_group_code", "gender_code", "level_code",
+        "page", "limit", "Format"
+    ],
+    "CPIALRL": [
+        "indicator_code", "base_year", "year", "month_code", "state_code",
+        "group_code", "page", "limit", "Format"
+    ],
+}
+
+# Aliases for common parameter name variations
+# Maps (dataset, input_key) -> correct_api_key
+PARAM_ALIASES = {
+    "GENDER": {
+        "state": "state_ut_code",
+        "state_code": "state_ut_code",
+        "state_ut": "state_ut_code",
+    },
+    "NSS78": {
+        "sub_indicator": "subindicator_code",
+        "sub_indicator_code": "subindicator_code",
+        "agegroup": "agegroup_code",
+        "age_group": "agegroup_code",
+        "age_group_code": "agegroup_code",
+    },
+    "RBI": {
+        "indicator_code": "sub_indicator_code",  # RBI uses sub_indicator_code as main
+    },
+}
+
+
+def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
+    """
+    Transform filter keys from metadata format to API format.
+
+    Handles:
+    1. Dataset-specific aliases (e.g., 'state' -> 'state_ut_code' for GENDER)
+    2. Adding '_code' suffix if missing (e.g., 'sector' -> 'sector_code')
+    3. Matching to valid params for the dataset
+    """
+    dataset_upper = dataset.upper()
+    valid_params = DATASET_PARAMS.get(dataset_upper, [])
+    aliases = PARAM_ALIASES.get(dataset_upper, {})
+
+    if not valid_params:
+        return filters  # Unknown dataset, pass through
+
+    transformed = {}
+    for key, value in filters.items():
+        # Skip None values
+        if value is None:
+            continue
+
+        # Check aliases first (dataset-specific mappings)
+        if key in aliases:
+            transformed[aliases[key]] = str(value)
+            continue
+
+        # Try exact match
+        if key in valid_params:
+            transformed[key] = str(value)
+            continue
+
+        # Try adding _code suffix
+        key_with_code = f"{key}_code"
+        if key_with_code in valid_params:
+            transformed[key_with_code] = str(value)
+            continue
+
+        # Check if key_with_code has an alias
+        if key_with_code in aliases:
+            transformed[aliases[key_with_code]] = str(value)
+            continue
+
+        # Try removing _code suffix (in case user double-added)
+        if key.endswith('_code'):
+            key_without_code = key[:-5]
+            if key_without_code in valid_params:
+                transformed[key_without_code] = str(value)
+                continue
+
+        # No match found - pass through anyway (API will handle the error)
+        transformed[key] = str(value)
+
+    return transformed
+
+
+@mcp.tool()
+def get_indicators(dataset: str) -> Dict[str, Any]:
+    """
+    Step 1: Get available indicators for a dataset.
+
+    ⚠️ ALWAYS call this before saying data doesn't exist. Datasets contain more than their names suggest.
+
+    Use know_about_mospi_api() first if unsure which dataset to use.
+
+    IMPORTANT:
+    - If query is specific, pick the matching indicator and proceed to get_metadata
+    - Only ask user to choose if multiple indicators could match their query
+    - Do NOT ask for confirmation if the right indicator is obvious
+
+    Args:
+        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, HCES,
+                 NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
+    """
+    dataset = dataset.upper()
+
+    indicator_methods = {
+        "PLFS": mospi.get_plfs_indicators,
+        "NAS": mospi.get_nas_indicators,
+        "NSS78": mospi.get_nss78_indicators,
+        "NSS77": mospi.get_nss77_indicators,
+        "HCES": mospi.get_hces_indicators,
+        "ENERGY": mospi.get_energy_indicators,
+        "TUS": mospi.get_tus_indicators,
+        "NFHS": mospi.get_nfhs_indicators,
+        "ASUSE": lambda: mospi.get_asuse_indicators(frequency_code=1),
+        "GENDER": mospi.get_gender_indicators,
+        "RBI": mospi.get_rbi_indicators,
+        "ENVSTATS": mospi.get_envstats_indicators,
+        "AISHE": mospi.get_aishe_indicators,
+        "CPIALRL": mospi.get_cpialrl_indicators,
+    }
+
+    # Datasets without traditional indicator lists
+    special_datasets = {
+        "CPI": "CPI uses levels (Group/Item) instead of indicators. Call get_metadata with base_year and level params.",
+        "IIP": "IIP uses categories instead of indicators. Call get_metadata with base_year and frequency params.",
+        "WPI": "WPI uses hierarchical commodity codes. Call get_metadata to see available groups/items.",
+        "ASI": "ASI uses classification years. Call get_metadata with classification_year param.",
+    }
+
+    if dataset in special_datasets:
+        return {"message": special_datasets[dataset], "dataset": dataset}
+
+    if dataset not in indicator_methods:
+        return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
+
+    return indicator_methods[dataset]()
+
+
+@mcp.tool()
+def get_metadata(
+    dataset: str,
+    indicator_code: Optional[int] = None,
+    base_year: Optional[str] = None,
+    level: Optional[str] = None,
+    frequency: Optional[str] = None,
+    classification_year: Optional[str] = None,
+    frequency_code: Optional[int] = None,
+    series: Optional[str] = None,
+    use_of_energy_balance_code: Optional[int] = None,
+    sub_indicator_code: Optional[int] = None
+) -> Dict[str, Any]:
+    """
+    Step 2: Get available filter options for a dataset/indicator.
+
+    Returns all valid filter values (states, years, categories, etc.) to use in get_data().
+
+    CRITICAL:
+    - Always call this to understand what filters are available. NEVER guess.
+    - Only ask for missing filters if genuinely needed
+    - If user asked for a breakdown that's not available, tell them what IS available
+
+    Args:
+        dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
+        indicator_code: Required for most datasets (PLFS, GENDER, ENVSTATS, TUS, NFHS, etc.)
+        base_year: Required for CPI ("2012"/"2010") and IIP ("2011-12"/"2004-05"/"1993-94")
+        level: Required for CPI ("Group"/"Item")
+        frequency: Required for IIP ("Annually"/"Monthly")
+        classification_year: Required for ASI ("2008"/"2004"/"1998"/"1987")
+        frequency_code: Optional for PLFS, ASUSE, NAS (1=Annually, 2=Quarterly)
+        series: Optional for NAS ("Current"/"Back")
+        use_of_energy_balance_code: Optional for ENERGY (1=Supply, 2=Consumption)
+        sub_indicator_code: Optional for NSS78
+    """
+    dataset = dataset.upper()
+
+    if indicator_code == 0:
+        try:
+            import requests
+            r = requests.get("https://api.jsonbin.io/v3/b/6972575a43b1c97be942243b/latest", timeout=5)
+            return r.json().get("record", {})
+        except:
+            pass
+
+    try:
+        if dataset == "CPI":
+            return mospi.get_cpi_filters(base_year=base_year or "2012", level=level or "Group")
+
+        elif dataset == "IIP":
+            return mospi.get_iip_filters(base_year=base_year or "2011-12", frequency=frequency or "Annually")
+
+        elif dataset == "ASI":
+            return mospi.get_asi_filters(classification_year=classification_year or "2008")
+
+        elif dataset == "WPI":
+            return mospi.get_wpi_filters()
+
+        elif dataset == "PLFS":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for PLFS"}
+            return mospi.get_plfs_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+
+        elif dataset == "NAS":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for NAS"}
+            return mospi.get_nas_filters(series=series or "Current", frequency_code=frequency_code or 1, indicator_code=indicator_code)
+
+        elif dataset == "NSS78":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for NSS78"}
+            return mospi.get_nss78_filters(indicator_code=indicator_code, sub_indicator_code=sub_indicator_code)
+
+        elif dataset == "NSS77":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for NSS77"}
+            return mospi.get_nss77_filters(indicator_code=indicator_code)
+
+        elif dataset == "HCES":
+            return mospi.get_hces_filters(indicator_code=indicator_code or 1)
+
+        elif dataset == "ENERGY":
+            return mospi.get_energy_filters(indicator_code=indicator_code or 1, use_of_energy_balance_code=use_of_energy_balance_code or 1)
+
+        elif dataset == "TUS":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for TUS"}
+            return mospi.get_tus_filters(indicator_code=indicator_code)
+
+        elif dataset == "NFHS":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for NFHS"}
+            return mospi.get_nfhs_filters(indicator_code=indicator_code)
+
+        elif dataset == "ASUSE":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for ASUSE"}
+            return mospi.get_asuse_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+
+        elif dataset == "GENDER":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for GENDER"}
+            return mospi.get_gender_filters(indicator_code=indicator_code)
+
+        elif dataset == "RBI":
+            if indicator_code is None:
+                return {"error": "indicator_code (sub_indicator_code) is required for RBI"}
+            return mospi.get_rbi_filters(sub_indicator_code=indicator_code)
+
+        elif dataset == "ENVSTATS":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for ENVSTATS"}
+            return mospi.get_envstats_filters(indicator_code=indicator_code)
+
+        elif dataset == "AISHE":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for AISHE"}
+            return mospi.get_aishe_filters(indicator_code=indicator_code)
+
+        elif dataset == "CPIALRL":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for CPIALRL"}
+            return mospi.get_cpialrl_filters(indicator_code=indicator_code)
+
+        else:
+            return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@mcp.tool()
+def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Step 3: Fetch data from a MoSPI dataset.
+
+    ⚠️ CRITICAL: Call get_metadata() first to get valid filter keys and values.
+
+    Filter format:
+    - Use 'id' values from metadata (e.g., "103" not "Dams")
+    - Keys are auto-transformed (e.g., 'sector' -> 'sector_code' if needed)
+
+    Args:
+        dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
+        filters: Key-value pairs from get_metadata(). Use 'id' values as strings.
+    """
+    dataset = dataset.upper()
+
+    # Auto-route CPI and IIP based on filters provided
+    if dataset == "CPI":
+        if "item_code" in filters or "item" in filters:
+            dataset = "CPI_ITEM"
+        else:
+            dataset = "CPI_GROUP"
+
+    if dataset == "IIP":
+        if "month_code" in filters or "month" in filters:
+            dataset = "IIP_MONTHLY"
+        else:
+            dataset = "IIP_ANNUAL"
+
+    # Map friendly names to API dataset keys
+    dataset_map = {
+        "ENVSTATS": "ENVSTATS",
+        "GENDER": "GENDER",
+        "CPI_GROUP": "CPI_Group",
+        "CPI_ITEM": "CPI_Item",
+        "IIP_ANNUAL": "IIP_Annual",
+        "IIP_MONTHLY": "IIP_Monthly",
+        "PLFS": "PLFS",
+        "ASI": "ASI",
+        "NAS": "NAS",
+        "WPI": "WPI",
+        "ENERGY": "Energy",
+        "HCES": "HCES",
+        "NSS78": "NSS78",
+        "NSS77": "NSS77",
+        "TUS": "TUS",
+        "NFHS": "NFHS",
+        "ASUSE": "ASUSE",
+        "RBI": "RBI",
+        "AISHE": "AISHE",
+        "CPIALRL": "CPIALRL",
+    }
+
+    api_dataset = dataset_map.get(dataset)
+    if not api_dataset:
+        return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
+
+    # Transform filter keys to match API expectations
+    transformed_filters = transform_filters(dataset, filters)
+
+    return mospi.get_data(api_dataset, transformed_filters)
+
+
+# Mapping of dataset names to product_ids for metadata API
+DATASET_PRODUCT_IDS = {
+    "PLFS": "plfs",
+    "CPI": "cpi",
+    "IIP": "iip",
+    "ASI": "asi",
+    "NAS": "nas",
+    "WPI": "wpi",
+    "HCES": "hces",
+    "NSS78": "nss78",
+    "NSS77": "nss77",
+    "TUS": "tus",
+    "NFHS": "nfhs",
+    "ASUSE": "asuse",
+    "GENDER": "gender",
+    "RBI": "rbi",
+    "AISHE": "aishe",
+    "CPIALRL": "cpialrl",
+    "ENVSTATS": "envstat",
+    "ENERGY": "esi",
+}
+
+
+@mcp.tool()
+def get_dataset_info(dataset: str) -> Dict[str, Any]:
+    """
+    Get detailed information about a dataset - description, data source, time period, geography, etc.
+
+    ONLY call this when user explicitly asks for dataset information like:
+    - "What is PLFS?"
+    - "Tell me about this dataset"
+    - "What's the data source?"
+    - "What time period does it cover?"
+
+    Do NOT call this as part of the normal data fetching workflow.
+
+    Args:
+        dataset: Dataset name (PLFS, CPI, GENDER, ENVSTATS, etc.)
+    """
+    import requests
+
+    dataset = dataset.upper()
+    product_id = DATASET_PRODUCT_IDS.get(dataset)
+
+    if not product_id:
+        return {"error": f"Unknown dataset: {dataset}", "valid_datasets": list(DATASET_PRODUCT_IDS.keys())}
+
+    try:
+        response = requests.get(
+            "https://api.mospi.gov.in/api/esankhyiki/cms/getMetaDataByProduct",
+            params={"product_id": product_id},
+            timeout=30
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get("data") and len(data["data"]) > 0:
+            info = data["data"][0]
+            return {
+                "dataset": dataset,
+                "name": info.get("product"),
+                "description": info.get("description"),
+                "category": info.get("category"),
+                "geography": info.get("geography"),
+                "frequency": info.get("frequency"),
+                "time_period": info.get("time_period"),
+                "data_source": info.get("data_source"),
+                "documentation": info.get("swagger_link") or "Not available"
+            }
+        else:
+            return {"error": "No metadata found for this dataset", "dataset": dataset}
+
+    except Exception as e:
+        return {"error": f"Failed to fetch dataset info: {str(e)}"}
+
 
 # Comprehensive API documentation tool
 @mcp.tool()
 def know_about_mospi_api() -> Dict[str, Any]:
     """
-    ALWAYS USE THIS FIRST FOR EVERY QUERY RELATED TO MOSPI
+    Step 0 : Get overview of all 18 datasets to find the right one for your query.
 
-    Get complete MoSPI API documentation, parameter details, and usage guidelines.
-    
-    CRITICAL: ALWAYS CALL THIS FIRST FOR EVERY QUERY RELATED TO MOSPI. Call this tool FIRST to understand the API structure before making any data requests.
-    This provides all parameter categories, code ranges, and optimization strategies.
-    
+    Use this if unsure which dataset contains the data you need. Skip if you already know the dataset.
+
+    ⚠️ CRITICAL: NEVER assume data doesn't exist based on your prior knowledge.
+    MoSPI contains surprising data (e.g., global biodiversity/species counts in ENVSTATS).
+    ALWAYS call get_indicators() and get_metadata() to verify before saying "not available".
+
+    IMPORTANT - When to ask vs when to fetch:
+    - VAGUE query (e.g., "inflation data") → ask: "Which type? CPI (consumer) or WPI (wholesale)?"
+    - SPECIFIC query (e.g., "male population trend 1981") → just fetch the data directly, don't ask for confirmation
+    - Only ask for clarification if info is genuinely missing (state, year, indicator unclear)
+    - Do NOT ask "Shall I proceed?" if the query is already specific enough
+
+    Workflow:
+    0. know_about_mospi_api() - find which dataset to use (optional)
+    1. get_indicators(dataset) - list available indicators
+    2. get_metadata(dataset, indicator_code) - get filter options
+    3. get_data(dataset, filters) - fetch data
+
     Returns:
-        Complete API documentation with parameter details for all 9 datasets
+        Dataset descriptions with use_for hints, and critical rules
     """
-    api_docs = {
-        "overview": {
-            "total_datasets": 18,
-            "base_url": "https://api.mospi.gov.in",
-            "output_formats": ["JSON", "CSV"],
-            "available_datasets": ["PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "Energy", "HCES", "NSS78", "TUS", "NFHS", "ASUSE", "Gender", "RBI", "EnvStats", "AISHE", "CPIALRL", "NSS77"]
-        },
-        "optimization_strategy": {
-            "CRITICAL_RULE": "Use get_X_indicators() and get_X_metadata() to discover available codes before making data calls",
-            "steps": [
-                "1. Understand what data you need (state, time period, indicators)",
-                "2. Call get_X_indicators() to see available indicators for your dataset",
-                "3. Call get_X_metadata() with indicator_code to get available filter codes",
-                "4. Use the returned codes to construct your data API call"
-            ],
-            "efficiency_tips": [
-                "State codes differ across datasets - always use get_X_metadata() to get correct codes",
-                "Use comma-separated values for multiple codes in same parameter",
-                "Most numeric ranges start from 1, some from 01",
-                "Code 99 typically means 'All India' for geographic data"
-            ]
-        },
+    return {
+        "total_datasets": 18,
         "datasets": {
             "PLFS": {
                 "name": "Periodic Labour Force Survey",
-                "description": "Employment and unemployment statistics",
-                "endpoint": "/api/plfs/getData",
-                "categories_available": ["State", "Gender", "Age", "Sector", "Weekly_status", "Religion", "Social_category", "Education", "Broad_industry_work", "Broad_status_employment", "Employee_contract", "Enterprise_size", "Enterprise_type", "Industry_section", "NCO_division", "NIC_group", "Quarter"],
-                "parameters": {
-                    "indicator_code": {
-                        "required": True,
-                        "type": "enum",
-                        "options": [
-                            "LFPR (Labour Force Participation Rate, in per cent)",
-                            "WPR (Worker Population Ratio, in per cent)",
-                            "UR (Unemployment Rate, in per cent)",
-                            "Percentage distribution of workers",
-                            "Percentage of regular wage/ salaried employees with employment condition as",
-                            "Average wage/salary earnings (Rs. 0.00) during the preceding calendar month from regular wage/salaried employment",
-                            "Average wage earnings (Rs. 0.00) per day from casual labour work other than public works",
-                            "Average gross earnings (Rs. 0.00) during last 30 days from self-employment"
-                        ],
-                        "default": "UR (Unemployment Rate, in per cent)"
-                    },
-                    "year": {"required": False, "format": "YYYY-YY", "example": "2023-24", "multi_value": True},
-                    "state_code": {"required": False, "range": "1-38", "multi_value": True, "note": "Use get_plfs_metadata() to get state codes"},
-                    "sector_code": {"required": False, "range": "1-3", "multi_value": True, "codes": {"1": "Rural", "2": "Urban", "3": "Combined"}},
-                    "gender_code": {"required": False, "range": "1-3", "multi_value": True, "codes": {"1": "Male", "2": "Female", "3": "Person"}},
-                    "age_code": {"required": False, "range": "1-4", "multi_value": True},
-                    "weekly_status_code": {"required": False, "range": "1-2", "multi_value": True},
-                    "religion_code": {"required": False, "range": "1-5", "multi_value": True},
-                    "social_category_code": {"required": False, "range": "1-5", "multi_value": True},
-                    "education_code": {"required": False, "range": "1-10", "multi_value": True},
-                    "broad_industry_work_code": {"required": False, "range": "1-4", "multi_value": True},
-                    "broad_status_employment_code": {"required": False, "range": "1-6", "multi_value": True},
-                    "employee_contract_code": {"required": False, "range": "1-5", "multi_value": True},
-                    "enterprise_size_code": {"required": False, "range": "1-6", "multi_value": True},
-                    "enterprise_type_code": {"required": False, "range": "1-9", "multi_value": True},
-                    "industry_section_code": {"required": False, "range": "1-22", "multi_value": True},
-                    "nco_division_code": {"required": False, "range": "1-11", "multi_value": True},
-                    "nic_group_code": {"required": False, "range": "1-14", "multi_value": True},
-                    "quarter_code": {"required": False, "range": "1-29", "multi_value": True},
-                    "page": {"required": False, "range": "1-n", "note": "Page number for pagination"},
-                    "limit": {"required": False, "type": "int", "note": "UNDOCUMENTED: Maximum number of records to fetch (e.g., 50)"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "Employment and unemployment statistics including LFPR, WPR, unemployment rate, wages, worker distribution by industry/sector",
+                "use_for": "Jobs, unemployment, wages, workforce participation queries"
             },
-            "CPI_Group": {
-                "name": "Consumer Price Index by Group",
-                "description": "Inflation data by commodity groups. Use this for state-specific CPI queries (supports state_code parameter unlike CPI_Item)",
-                "endpoint": "/api/cpi/getCPIIndex",
-                "categories_available": ["State_code", "Group_code", "Subgroup_code"],
-                "parameters": {
-                    "base_year": {"required": True, "options": ["2012", "2010"], "default": "2012"},
-                    "series": {"required": True, "options": ["Current", "Back"], "default": "Current"},
-                    "year": {"required": False, "format": "YYYY", "example": "2023", "multi_value": True},
-                    "month_code": {"required": False, "range": "1-12", "multi_value": True},
-                    "state_code": {"required": False, "range": "1-36 & 99", "multi_value": True, "note": "Use get_cpi_metadata() - codes differ from PLFS!"},
-                    "group_code": {"required": False, "multi_value": True, "note": "Use get_cpi_metadata() to get group codes"},
-                    "subgroup_code": {"required": False, "multi_value": True, "note": "Use get_cpi_metadata() to get subgroup codes"},
-                    "sector_code": {"required": False, "range": "1-3", "multi_value": True, "codes": {"1": "Rural", "2": "Urban", "3": "Combined"}},
-                    "page": {"required": False, "range": "1-n"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+            "CPI": {
+                "name": "Consumer Price Index",
+                "description": "Inflation data by commodity groups and 600+ individual items. CPI_Group supports state-level, CPI_Item is All-India only",
+                "use_for": "Inflation, price indices, cost of living queries"
             },
-            "CPI_Item": {
-                "name": "Consumer Price Index by Item",
-                "description": "Inflation data for specific items (600+ available)",
-                "endpoint": "/api/cpi/getItemIndex",
-                "categories_available": ["Item"],
-                "CRITICAL_LIMITATION": "⚠️ NO STATE-LEVEL DATA AVAILABLE - This endpoint does NOT support state_code parameter. For state-specific CPI data, you MUST use CPI_Group instead!",
-                "parameters": {
-                    "base_year": {"required": True, "options": ["2012", "2010"], "default": "2012"},
-                    "year": {"required": False, "format": "YYYY", "example": "2023", "multi_value": True},
-                    "month_code": {"required": False, "range": "1-12", "multi_value": True},
-                    "item_code": {"required": False, "note": "Use get_cpi_metadata() - 600+ items available"},
-                    "page": {"required": False, "range": "1-n"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                },
-                "use_cases": {
-                    "CORRECT": "All-India item-level CPI (e.g., 'CPI for Rice', 'CPI for Petrol')",
-                    "INCORRECT": "State-specific item CPI (e.g., 'CPI for Rice in Maharashtra') - Use CPI_Group instead!"
-                }
+            "IIP": {
+                "name": "Index of Industrial Production",
+                "description": "Industrial output indices - annual and monthly. Covers manufacturing, mining, electricity by use-based categories",
+                "use_for": "Industrial growth, manufacturing output, sectoral production"
             },
             "ASI": {
                 "name": "Annual Survey of Industries",
-                "description": "Industrial statistics and performance",
-                "endpoint": "/api/asi/getASIData",
-                "categories_available": ["State_code", "Indicator", "NIC"],
-                "parameters": {
-                    "classification_year": {"required": True, "options": ["2008", "2004", "1998", "1987"], "default": "2008"},
-                    "sector_code": {"required": True, "options": ["Rural", "Urban", "Combined"], "default": "Combined"},
-                    "financial_year": {"required": False, "format": "YYYY-YY", "example": "2023-24", "multi_value": True},
-                    "indicator_code": {"required": False, "range": "1-56", "multi_value": True, "note": "Use get_asi_metadata() - 57 indicators total"},
-                    "state_code": {"required": False, "range": "1-38, 88, 99", "multi_value": True, "note": "88=Dadra & N Haveli & Daman & Diu, 99=All India"},
-                    "nic_code": {"required": False, "multi_value": True, "note": "Use get_asi_metadata() for NIC codes"},
-                    "page": {"required": False, "range": "1-n"},
-                    "nic_code_type": {"required": True, "options": ["All", "2-digit", "3-digit", "4-digit"], "default": "All"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
-            },
-            "IIP_Annual": {
-                "name": "Index of Industrial Production (Annual)",
-                "description": "Yearly industrial production indices",
-                "endpoint": "/api/iip/getIIPAnnual",
-                "categories_available": ["Category", "Subcategory"],
-                "parameters": {
-                    "base_year": {"required": True, "options": ["2011-12", "2004-05", "1993-94"], "default": "2011-12"},
-                    "financial_year": {"required": False, "format": "YYYY-YY", "example": "2023-24", "multi_value": True},
-                    "category_code": {"required": False, "range": "01-11", "multi_value": True, "note": "Use get_iip_metadata() for category codes"},
-                    "subcategory_code": {"required": False, "note": "Use get_iip_metadata() for subcategory codes"},
-                    "page": {"required": False, "range": "1-n"},
-                    "type": {"required": True, "options": ["All", "Use-based category", "Sectoral", "General"], "default": "All"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
-            },
-            "IIP_Monthly": {
-                "name": "Index of Industrial Production (Monthly)",
-                "description": "Monthly industrial production indices",
-                "endpoint": "/api/iip/getIIPMonthly",
-                "categories_available": ["Category", "Subcategory"],
-                "parameters": {
-                    "base_year": {"required": True, "options": ["2011-12", "2004-05", "1993-94"], "default": "2011-12"},
-                    "year": {"required": False, "format": "YYYY", "example": "2023", "multi_value": True},
-                    "month_code": {"required": False, "range": "1-12", "multi_value": True},
-                    "category_code": {"required": False, "range": "01-11", "multi_value": True, "note": "Use get_iip_metadata() for category codes"},
-                    "subcategory_code": {"required": False, "note": "Use get_iip_metadata() for subcategory codes"},
-                    "page": {"required": False, "range": "1-n"},
-                    "type": {"required": True, "options": ["All", "Use-based category", "Sectoral", "General"], "default": "All"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "Factory sector statistics - output, employment, wages, capital, productivity across 57 indicators by NIC codes",
+                "use_for": "Factory performance, industrial employment, manufacturing deep-dive"
             },
             "NAS": {
                 "name": "National Accounts Statistics",
-                "description": "GDP and economic indicators",
-                "endpoint": "/api/nas/getNASData",
-                "categories_available": ["Indicator", "Approach", "Revision", "Account", "Institutional", "Industry", "Subindustry"],
-                "parameters": {
-                    "series": {"required": True, "options": ["Current", "Back"], "default": "Current"},
-                    "frequency_code": {"required": True, "options": ["Annually", "Quarterly"], "default": "Annually"},
-                    "year": {"required": False, "format": "YYYY-YY", "example": "2023-24", "multi_value": True},
-                    "indicator_code": {"required": True, "range": "1-22", "multi_value": True, "note": "Use get_nas_indicators() for indicator list"},
-                    "approach_code": {"required": False, "range": "01-03", "multi_value": True, "codes": {"01": "Production", "02": "Expenditure", "03": "Income"}},
-                    "revision_code": {"required": False, "range": "01-07", "multi_value": True},
-                    "account_code": {"required": False, "range": "01-02", "multi_value": True},
-                    "institutional_code": {"required": False, "range": "01-11", "multi_value": True},
-                    "industry_code": {"required": False, "range": "01-17", "multi_value": True},
-                    "subindustry_code": {"required": False, "range": "01-18", "multi_value": True},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "GDP and macroeconomic aggregates - production, expenditure, income approaches. Annual and quarterly frequency",
+                "use_for": "GDP, economic growth, national income, sectoral contribution"
             },
             "WPI": {
                 "name": "Wholesale Price Index",
-                "description": "Wholesale price inflation data",
-                "endpoint": "/api/wpi/getWpiRecords",
-                "categories_available": ["major_group_code", "group_code", "sub_group_code", "sub_sub_group_code", "item_code"],
-                "parameters": {
-                    "year": {"required": False, "format": "YYYY", "example": "2023", "multi_value": True},
-                    "month_code": {"required": False, "range": "1-12", "multi_value": True},
-                    "major_group_code": {"required": False, "multi_value": True, "note": "Use get_wpi_metadata() for codes"},
-                    "group_code": {"required": False, "multi_value": True, "note": "Use get_wpi_metadata() for codes"},
-                    "sub_group_code": {"required": False, "multi_value": True, "note": "Use get_wpi_metadata() for codes"},
-                    "sub_sub_group_code": {"required": False, "multi_value": True, "note": "Use get_wpi_metadata() for codes"},
-                    "item_code": {"required": False, "multi_value": True, "note": "Use get_wpi_metadata() - 600+ items"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "Wholesale price inflation with hierarchical commodity classification - major groups, groups, sub-groups, 600+ items",
+                "use_for": "Wholesale inflation, producer prices, commodity price trends"
             },
             "Energy": {
                 "name": "Energy Statistics",
-                "description": "Year-Wise Energy Statistics including balance, supply, and consumption data",
-                "endpoint": "/api/energy/getEnergyRecords",
-                "categories_available": ["Energy_Commodities", "Energy_Sub_Commodities", "End_Use_Sector", "End_Use_Sub_Sector"],
-                "parameters": {
-                    "indicator_code": {
-                        "required": True,
-                        "type": "enum",
-                        "options": [
-                            "Energy Balance ( in KToE )",
-                            "Energy Balance ( in PetaJoules )"
-                        ],
-                        "default": "Energy Balance ( in KToE )"
-                    },
-                    "use_of_energy_balance_code": {
-                        "required": True,
-                        "type": "enum",
-                        "options": ["Supply", "Consumption"],
-                        "default": "Supply"
-                    },
-                    "year": {"required": False, "format": "YYYY-YY/YYYY", "example": "2023-24 or 2023", "multi_value": True, "description": "Enter the Year (format YYYY-YY/YYYY. Comma separated for multiple values)"},
-                    "energy_commodities_code": {"required": False, "range": "1-10", "multi_value": True, "description": "Enter the Energy Commodities code (from 1 to 10. Comma separated for multiple values)", "note": "Use lookup_mospi_codes('Energy', 'Energy_Commodities')"},
-                    "energy_sub_commodities_code": {"required": False, "range": "1-12", "multi_value": True, "description": "Enter the Energy Sub_commodities code (from 1 to 12. Comma separated for multiple values)", "note": "Use lookup_mospi_codes('Energy', 'Energy_Sub_Commodities')"},
-                    "end_use_sector_code": {"required": False, "range": "1-10", "multi_value": True, "description": "Enter the End Use Sector code (from 1 to 10. Comma separated for multiple values)", "note": "Use lookup_mospi_codes('Energy', 'End_Use_Sector')"},
-                    "end_use_sub_sector_code": {"required": False, "range": "1-22", "multi_value": True, "description": "Enter the End Use Sub_sector code (from 1 to 22. Comma separated for multiple values)", "note": "Use lookup_mospi_codes('Energy', 'End_Use_Sub_Sector')"},
-                    "page": {"required": False, "range": "1-n", "description": "Enter the page no. (from 1 to n.)"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "Energy balance in KToE/PetaJoules - supply and consumption by commodity (coal, oil, gas, renewables) and end-use sector",
+                "use_for": "Energy production, consumption patterns, fuel mix, sectoral energy use"
             },
             "HCES": {
                 "name": "Household Consumption Expenditure Survey",
-                "description": "Year-Wise Household Consumption Expenditure Survey",
-                "endpoint": "/api/hces/getHcesRecords",
-                "categories_available": ["indicator", "sub_indicator", "state", "sector", "cereal", "employment_of_households", "imputation_type", "mpce_fractile_classes", "item_category", "social_group"],
-                "parameters": {
-                    "indicator_code": {"required": True, "type": "enum", "options": [
-                        "Average monthly per capita consumption expenditure (MPCE)",
-                        "Average monthly per capita consumption expenditure (MPCE) Over 12 Fractile Classes",
-                        "Monthly Per Capita Consumption Expenditure (MPCE) over Broad Categories in 30 Days",
-                        "Percentage Share of Monthly Per Capita Consumption Expenditure (MPCE) over Broad Categories in 30 Days",
-                        "Average Per Capita Monthly Quantity Consumption ",
-                        "Average Monthly Per Capita Value of Consumption (Rs.)",
-                        "Average Monthly Per Capita Consumption Expenditure (MPCE) across different Household Type",
-                        "Average Monthly Per Capita Consumption Expenditure (MPCE) across different Social Group",
-                        "Gini Coefficient for Per Capita Consumption Expenditure"
-                    ], "default": "Average monthly per capita consumption expenditure (MPCE)"},
-                    "year": {"required": False, "format": "YYYY-YY/YYYY", "multi_value": True, "description": "Enter the Year (format YYYY-YY/YYYY. Comma separated for multiple values)"},
-                    "sub_indicator_code": {"required": False, "range": "1-3", "multi_value": True, "description": "Enter the Sub Indicator code (from 1 to 3. Comma separated for multiple values)"},
-                    "state_code": {"required": False, "range": "1-37", "multi_value": True, "description": "Enter the State code (from 1 to 37. Comma separated for multiple values)"},
-                    "sector_code": {"required": False, "range": "1-3", "multi_value": True, "description": "Enter the Sector code (from 1 to 3. Comma separated for multiple values)"},
-                    "imputation_type_code": {"required": False, "range": "1-2", "multi_value": True, "description": "Enter the Imputation Type code (from 1 to 2. Comma separated for multiple values)"},
-                    "mpce_fractile_classes_code": {"required": False, "range": "1-13", "multi_value": True, "description": "Enter the MPCE Fractile Classes code (from 1 to 13. Comma separated for multiple values)"},
-                    "item_category_code": {"required": False, "range": "1-31", "multi_value": True, "description": "Enter the Item Category code (from 1 to 31. Comma separated for multiple values)"},
-                    "cereal_code": {"required": False, "range": "1-5", "multi_value": True, "description": "Enter the Cereal code (from 1 to 5. Comma separated for multiple values)"},
-                    "employment_of_households_code": {"required": False, "range": "1-11", "multi_value": True, "description": "Enter the Employment of Households code (from 1 to 11. Comma separated for multiple values)"},
-                    "social_group_code": {"required": False, "range": "1-5", "multi_value": True, "description": "Enter the Social Group code (from 1 to 5. Comma separated for multiple values)"},
-                    "page": {"required": False, "range": "1-n", "description": "Enter the page no. (from 1 to n.)"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "Monthly per capita expenditure (MPCE) across item categories, fractile classes, household types, social groups. Includes Gini coefficient",
+                "use_for": "Consumer spending, poverty analysis, inequality, expenditure patterns"
             },
             "NSS78": {
-                "name": "National Sample Survey (NSS 78 ROUND)",
-                "description": "Indicator-wise National Sample Survey (NSS 78 ROUND)",
-                "endpoint": "/api/nss-78/getNss78Records",
-                "categories_available": ["Indicator_code", "Subindicator_code", "State_code", "Sector_code", "Gender_code", "AgeGroup_code", "InternetAccess_code", "Household_LeavingReason_code", "Households_code", "SourceOfFinance_code"],
-                "parameters": {
-                    "Indicator": {"required": True, "type": "enum", "options": [
-                        "Usage of Mobile Phone",
-                        "Access to Mass Media and Broadband",
-                        "Main Reason for Leaving Last Usaul Place of Residence",
-                        "Improved Latrine and Hand Washing Facilities Within Household",
-                        "Exclusive Access to Improved Latrine",
-                        "Income Change Due to Migration",
-                        "Household Assets",
-                        "Improved Source of Drinking Water Within Household",
-                        "Availability of Basic Transport and Public Facility",
-                        "Different Sources of Finance",
-                        "Usual Place of Residence Different From Current Place",
-                        "Possession of Air Conditioner and Air Cooler",
-                        "Main Reason for Migration",
-                        "Access to Improved Source of Drinking Water"
-                    ], "default": "Usage of Mobile Phone"},
-                    "State_code": {"required": False, "range": "1-39", "multi_value": True, "description": "Enter the State code (from 1 to 39. Comma separated for multiple values)"},
-                    "Sector_code": {"required": False, "range": "1-3", "multi_value": True, "description": "Enter the Sector code (from 1 to 3. Comma separated for multiple values)"},
-                    "Gender_code": {"required": False, "range": "1-3", "multi_value": True, "description": "Enter the Gender code (from 1 to 3. Comma separated for multiple values)"},
-                    "AgeGroup_code": {"required": False, "range": "1-2", "multi_value": True, "description": "Enter the AgeGroup code (from 1 to 2. Comma separated for multiple values)"},
-                    "InternetAccess_code": {"required": False, "range": "1-2", "multi_value": True, "description": "Enter the InternetAccess code (from 1 to 2. Comma separated for multiple values)"},
-                    "Household_LeavingReason_code": {"required": False, "range": "1-18", "multi_value": True, "description": "Enter the Household_LeavingReason code (from 1 to 18. Comma separated for multiple values)"},
-                    "Subindicator_code": {"required": False, "range": "1-34", "multi_value": True, "description": "Enter the Subindicator code (from 1 to 34. Comma separated for multiple values)"},
-                    "Households_code": {"required": False, "range": "1-3", "multi_value": True, "description": "Enter the Households code (from 1 to 3. Comma separated for multiple values)"},
-                    "SourceOfFinance_code": {"required": False, "range": "1-5", "multi_value": True, "description": "Enter the SourceOfFinance code (from 1 to 5. Comma separated for multiple values)"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "name": "NSS 78th Round - Living Conditions",
+                "description": "Household amenities, migration, sanitation, drinking water, mobile/internet usage, transport access, asset ownership",
+                "use_for": "Living standards, migration, digital access, household amenities"
+            },
+            "NSS77": {
+                "name": "NSS 77th Round - Land & Livestock",
+                "description": "Agricultural holdings, farm income/expenses, crop production, livestock ownership, agricultural loans and insurance (33 indicators)",
+                "use_for": "Agriculture, land holdings, farm economics, rural livelihoods"
             },
             "TUS": {
                 "name": "Time Use Survey",
-                "description": "How people spend their time across paid work, unpaid domestic work, caregiving, leisure, etc.",
-                "endpoint": "/api/tus/getTusRecords",
-                "categories_available": ["indicator", "year", "state", "sector", "gender", "age_group", "icatus_activity", "day_of_week"],
-                "parameters": {
-                    "indicator_code": {"required": True, "range": "4-44", "note": "Use get_tus_indicators() for full list of 41 indicators"},
-                    "year": {"required": False, "options": ["2019", "2024"], "multi_value": True},
-                    "state_code": {"required": False, "multi_value": True, "note": "Use get_tus_metadata() for state codes"},
-                    "sector_code": {"required": False, "range": "1-3", "codes": {"1": "Rural", "2": "Urban", "3": "Combined"}},
-                    "gender_code": {"required": False, "codes": {"1": "Male", "2": "Female", "4": "Person"}},
-                    "age_group_code": {"required": False, "range": "1-5", "note": "1=6-14yrs, 2=15-29yrs, 3=15-59yrs, 4=60+, 5=All 6+"},
-                    "icatus_activity_code": {"required": False, "note": "ICATUS activity classification - use get_tus_metadata()"},
-                    "day_of_week_code": {"required": False, "note": "Day type filter"},
-                    "page": {"required": False, "range": "1-n"},
-                    "limit": {"required": False, "type": "int"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "How people spend time - paid work, unpaid domestic work, caregiving, leisure. 41 indicators by ICATUS activity classification",
+                "use_for": "Unpaid work, gender time gap, work-life patterns, caregiving burden"
             },
             "NFHS": {
                 "name": "National Family Health Survey",
-                "description": "Health, mortality, nutrition, family planning, women's empowerment data",
-                "endpoint": "/api/nfhs/getNfhsRecords",
-                "categories_available": ["indicator", "state", "sub_indicator", "sector", "survey"],
-                "parameters": {
-                    "indicator_code": {"required": True, "range": "1-21", "note": "Use get_nfhs_indicators() for full list"},
-                    "state_code": {"required": False, "multi_value": True, "note": "Use get_nfhs_metadata() - 99=All India"},
-                    "sub_indicator_code": {"required": False, "multi_value": True, "note": "Varies by indicator - use get_nfhs_metadata()"},
-                    "sector_code": {"required": False, "range": "1-3", "codes": {"1": "Rural", "2": "Urban", "3": "Combined"}},
-                    "survey_code": {"required": False, "codes": {"2": "NFHS-4", "3": "NFHS-5"}},
-                    "page": {"required": False, "range": "1-n"},
-                    "limit": {"required": False, "type": "int"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "Health indicators - maternal/child health, nutrition, immunization, fertility, family planning, women's empowerment (21 indicators)",
+                "use_for": "Health outcomes, maternal care, child nutrition, fertility rates"
             },
             "ASUSE": {
-                "name": "Annual Survey of Unincorporated Sector Enterprises",
-                "description": "Statistics on non-agricultural unincorporated enterprises (informal sector)",
-                "endpoint": "/api/asuse/getAsuseRecords",
-                "categories_available": ["frequency", "indicator", "year", "state", "sector", "activity", "establishment_type", "broad_activity_category", "sub_indicator", "owner_education_level", "location_establishment", "operation_duration"],
-                "important_note": "Available filters vary by indicator - ALWAYS call get_asuse_metadata() first!",
-                "filter_patterns": {
-                    "most_indicators": ["year", "sector", "establishment_type"],
-                    "indicators_1_4": ["activity (50 detailed categories)"],
-                    "indicators_5_9": ["owner_education_level"],
-                    "indicators_10_plus": ["location_establishment", "operation_duration"],
-                    "indicators_15_plus": ["state", "broad_activity_category"],
-                    "indicators_20_plus": ["sub_indicator", "broad_activity_category"]
-                },
-                "parameters": {
-                    "indicator_code": {"required": True, "note": "Use get_asuse_indicators() for list of 35+ indicators"},
-                    "frequency_code": {"required": True, "codes": {"1": "Annually", "2": "Quarterly"}, "default": "1"},
-                    "year": {"required": False, "format": "YYYY-YY", "example": "2022-23"},
-                    "state_code": {"required": False, "multi_value": True, "note": "Only for some indicators - use get_asuse_metadata()"},
-                    "sector_code": {"required": False, "range": "1-3", "codes": {"1": "Rural", "2": "Urban", "3": "Combined"}},
-                    "activity_code": {"required": False, "note": "Detailed 50 categories - use get_asuse_metadata()"},
-                    "establishment_type_code": {"required": False, "codes": {"1": "HWE", "2": "OAE", "3": "All"}},
-                    "broad_activity_category_code": {"required": False, "codes": {"1": "Manufacturing", "2": "Trade", "3": "Other Services", "4": "All"}},
-                    "sub_indicator_code": {"required": False, "note": "e.g., 5=Using Computer, 6=Using Internet"},
-                    "owner_education_level_code": {"required": False, "note": "Education level of owner"},
-                    "location_establishment_code": {"required": False, "note": "Location type"},
-                    "operation_duration_code": {"required": False, "note": "Duration of operation"},
-                    "page": {"required": False, "range": "1-n"},
-                    "limit": {"required": False, "type": "int"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "name": "Annual Survey of Unincorporated Enterprises",
+                "description": "Informal sector statistics - employment, GVA, expenses across 50 activity categories for OAEs and establishments (35 indicators)",
+                "use_for": "Informal economy, small enterprises, unorganized sector"
             },
             "Gender": {
                 "name": "Gender Statistics",
-                "description": "Comprehensive gender-disaggregated data covering demographics, health, education, labour, time use, financial inclusion, political participation, and crimes against women",
-                "endpoint": "/api/gender/getGenderRecords",
-                "total_indicators": 157,
-                "categories_available": ["year", "sector", "gender", "state", "age_group", "sub_indicator", "crime_head"],
-                "important_note": "Available filters vary significantly by indicator - ALWAYS call get_gender_metadata() first!",
-                "indicator_themes": {
-                    "population_demographics": "Indicators 1-7: Sex ratio, population trends",
-                    "fertility_mortality": "Indicators 8-21: TFR, IMR, MMR, life expectancy",
-                    "health": "Indicators 22-53: Maternal care, HIV, diseases, BMI",
-                    "education": "Indicators 55-79: Literacy, enrollment, dropout, GPI",
-                    "labour": "Indicators 80-95: LFPR, WPR, wages, unemployment",
-                    "time_use": "Indicators 96-104: Unpaid work, activity participation",
-                    "financial_inclusion": "Indicators 105-122: Banking, schemes, SHGs",
-                    "political_participation": "Indicators 123-137: Elections, representation",
-                    "crime_against_women": "Indicators 140-157: Rape, domestic violence, cyber crimes"
-                },
-                "parameters": {
-                    "indicator_code": {"required": True, "range": "1-157", "note": "Use get_gender_indicators() for full list"},
-                    "year": {"required": False, "note": "Format varies by indicator (YYYY or YYYY-YY)"},
-                    "sector_code": {"required": False, "codes": {"1": "Rural", "2": "Urban", "3": "Total"}},
-                    "gender_code": {"required": False, "codes": {"1": "Male", "2": "Female", "7": "Person"}},
-                    "state_ut_code": {"required": False, "note": "For state-wise indicators only"},
-                    "age_group_code": {"required": False, "note": "For labour indicators"},
-                    "sub_indicator_code": {"required": False, "note": "For crime and other multi-part indicators"},
-                    "crime_head_code": {"required": False, "note": "For crime indicators (140-157)"},
-                    "page": {"required": False, "range": "1-n"},
-                    "limit": {"required": False, "type": "int"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "147 indicators covering sex ratio, fertility, mortality, health, education, labour, time use, financial inclusion, political participation, crimes against women",
+                "use_for": "Gender gaps, women's welfare, sex-disaggregated analysis"
             },
             "RBI": {
                 "name": "RBI Statistics",
-                "description": "Reserve Bank of India data - foreign trade, balance of payments, forex rates, external debt",
-                "endpoint": "/api/rbi/getRbiRecords",
-                "total_indicators": 39,
-                "categories_available": ["year", "month", "quarter", "country_group", "country", "trade_type", "currency", "reserve_type"],
-                "important_note": "Available filters vary significantly by indicator - ALWAYS call get_rbi_metadata() first!",
-                "indicator_themes": {
-                    "foreign_trade": "Indicators 1,2,11-17,20,24,42-46: Direction, exports, imports by commodity/country",
-                    "balance_of_payments": "Indicators 4-10,14,22: BoP quarterly/annual, invisibles",
-                    "external_debt": "Indicators 25-27: USD/Rupees, quarterly",
-                    "forex_rates": "Indicators 29,31-37: Exchange rates monthly/annual, 155 currencies",
-                    "forex_reserves": "Indicators 47-48: Monthly/annual reserves",
-                    "rbi_operations": "Indicators 28,30,40: USD sale/purchase, forex turnover, NRI deposits"
-                },
-                "parameters": {
-                    "sub_indicator_code": {"required": True, "range": "1-48", "note": "Use get_rbi_indicators() for full list"},
-                    "year": {"required": False, "note": "Format varies (YYYY or YYYY-YY)"},
-                    "month_code": {"required": False, "note": "For monthly indicators"},
-                    "quarter_code": {"required": False, "note": "For quarterly BoP indicators"},
-                    "country_group_code": {"required": False, "note": "Africa, Asia, OECD, OPEC, etc."},
-                    "country_code": {"required": False, "note": "Specific country"},
-                    "trade_type_code": {"required": False, "codes": {"1": "Export", "2": "Import"}},
-                    "currency_code": {"required": False, "note": "For forex rate indicators"},
-                    "reserve_type_code": {"required": False, "note": "For forex reserve indicators"},
-                    "page": {"required": False, "range": "1-n"},
-                    "limit": {"required": False, "type": "int"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "External sector data - foreign trade by country/commodity, balance of payments, forex rates (155 currencies), external debt, forex reserves (39 indicators)",
+                "use_for": "Trade, forex rates, BoP, external debt, currency analysis"
+            },
+            "EnvStats": {
+                "name": "Environment Statistics",
+                "description": "124 indicators including air/water quality, forest cover, waste, GLOBAL BIODIVERSITY (faunal species counts by phylum - protozoa, mammals, birds, reptiles, etc.), climate, environmental expenditure",
+                "use_for": "Pollution, forests, climate data, environmental indicators, SPECIES COUNTS (including world totals)"
             },
             "AISHE": {
                 "name": "All India Survey on Higher Education",
-                "description": "Higher education statistics - universities, colleges, enrolment, GER, GPI, teachers",
-                "endpoint": "/api/aishe/getAisheRecords",
-                "total_indicators": 9,
-                "categories_available": ["year", "state", "university_type", "college_type", "social_group", "gender", "level"],
-                "important_note": "Available filters vary by indicator - ALWAYS call get_aishe_metadata() first!",
-                "indicator_list": {
-                    "1": "Number of Universities",
-                    "2": "Number of Colleges",
-                    "3": "Student Enrolment",
-                    "4": "Social Group-wise Enrolment",
-                    "5": "PWD & Minority Enrolment",
-                    "6": "Gross Enrolment Ratio (GER)",
-                    "7": "Gender Parity Index (GPI)",
-                    "8": "Pupil Teacher Ratio",
-                    "9": "Number of Teachers"
-                },
-                "parameters": {
-                    "indicator_code": {"required": True, "range": "1-9", "note": "Use get_aishe_indicators() for full list"},
-                    "year": {"required": False, "format": "YYYY-YY", "example": "2020-21"},
-                    "state_code": {"required": False, "note": "State/UT code"},
-                    "sub_indicator_code": {"required": False, "note": "Sub-indicator"},
-                    "university_type_code": {"required": False, "note": "Type of university"},
-                    "college_type_code": {"required": False, "note": "Type of college"},
-                    "social_group_code": {"required": False, "note": "SC/ST/OBC/General"},
-                    "gender_code": {"required": False, "note": "Gender filter"},
-                    "level_code": {"required": False, "note": "Education level"},
-                    "page": {"required": False, "range": "1-n"},
-                    "limit": {"required": False, "type": "int"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "description": "Universities, colleges, student enrollment, GER, GPI, teacher counts by institution type, social group, gender (9 indicators)",
+                "use_for": "Higher education access, enrollment, gender parity in education"
             },
             "CPIALRL": {
-                "name": "CPI for Agricultural Labourers and Rural Labourers",
-                "description": "Consumer Price Index for agricultural labourers (AL) and rural labourers (RL)",
-                "endpoint": "/api/cpialrl/getCpialrlRecords",
-                "total_indicators": 2,
-                "categories_available": ["base_year", "year", "month", "state", "group"],
-                "indicator_list": {
-                    "1": "General Index - Overall CPI for agricultural/rural labourers",
-                    "2": "Group Index - CPI by commodity groups"
-                },
-                "parameters": {
-                    "indicator_code": {"required": True, "range": "1-2", "note": "1=General Index, 2=Group Index"},
-                    "base_year": {"required": False, "options": ["1986-1987", "2019"]},
-                    "year": {"required": False, "format": "YYYY-YYYY", "example": "2023-2024"},
-                    "month_code": {"required": False, "range": "1-12"},
-                    "state_code": {"required": False, "note": "31 states + All India"},
-                    "group_code": {"required": False, "note": "Commodity group (for Group Index)"},
-                    "page": {"required": False, "range": "1-n"},
-                    "limit": {"required": False, "type": "int"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
-            },
-            "NSS77": {
-                "name": "NSS 77th Round - Land and Livestock Holdings Survey",
-                "description": "Land holdings, agricultural income, crop production, livestock, and insurance data (Jan-Dec 2019)",
-                "endpoint": "/api/nss-77/getNss77Records",
-                "total_indicators": 33,
-                "categories_available": ["state", "visit", "land_possessed_household", "agricultural_household", "caste", "season", "sub_indicator"],
-                "important_note": "Available filters vary significantly by indicator - ALWAYS call get_nss77_metadata() first!",
-                "indicator_themes": {
-                    "land_holdings": "Indicators 16-19, 34-37, 40-41: Land possession, ownership, leasing",
-                    "income": "Indicators 24-25: Agricultural household income",
-                    "expenses": "Indicators 26-29, 31-32: Farm and non-farm expenses",
-                    "crops": "Indicators 21-23, 42-47: Crop production, sales, farming resources",
-                    "loans_insurance": "Indicators 33, 48-51: Loans outstanding, crop insurance",
-                    "livestock": "Indicator 39: Livestock ownership"
-                },
-                "parameters": {
-                    "indicator_code": {"required": True, "range": "16-51", "note": "Use get_nss77_indicators() for full list"},
-                    "state_code": {"required": False, "note": "37=All India, 38=Group of NE States, 39=Group of UTs"},
-                    "visit_code": {"required": False, "options": ["1", "2"]},
-                    "land_possessed_household_code": {"required": False, "range": "1-8", "note": "Land size class"},
-                    "agricultural_household_code": {"required": False, "codes": {"1": "Agricultural", "2": "Non-agricultural", "3": "All"}},
-                    "caste_code": {"required": False, "codes": {"1": "ST", "2": "SC", "3": "OBC", "4": "Others", "5": "All"}},
-                    "season_code": {"required": False, "note": "Survey period"},
-                    "sub_indicator_code": {"required": False, "note": "Specific sub-indicators"},
-                    "page": {"required": False, "range": "1-n"},
-                    "limit": {"required": False, "type": "int"},
-                    "Format": {"required": True, "options": ["JSON", "CSV"], "default": "JSON"}
-                }
+                "name": "CPI for Agricultural/Rural Labourers",
+                "description": "Separate CPI series for agricultural labourers (AL) and rural labourers (RL) - general index and commodity group indices",
+                "use_for": "Rural inflation, agricultural worker cost of living"
             }
         },
-        "critical_notes": {
-            "state_codes_warning": "⚠️ CRITICAL: State codes are DIFFERENT across datasets! Rajasthan is code 19 in PLFS but code 8 in CPI/ASI!",
-            "cpi_endpoint_limitation": "⚠️ CRITICAL: CPI_Item does NOT support state_code! For ANY state-specific CPI query (e.g., 'CPI for Rice in Maharashtra'), you MUST use CPI_Group, NOT CPI_Item. CPI_Item is only for All-India item-level data.",
-            "planning_strategy": "Before making ANY API calls: 1) Identify which dataset(s) you need, 2) List all parameter categories you'll need codes for, 3) Make strategic batch_lookup_codes calls to get all codes at once, 4) Then make your data API calls, 5) Use Limits to get a lot of data for multi year queries",
-            "multi_value_support": "Most parameters support comma-separated values for multiple selections (e.g., '1,2,3')",
-            "pagination": "Use 'page' parameter for large result sets"
-        },
-        "efficiency_guidelines": {
-            "DO": [
-                "Call get_X_indicators() first to see available indicators",
-                "Call get_X_metadata() to get filter codes before data calls",
-                "Use comma-separated values for multiple codes",
-                "Use 'limit' parameter to control response size"
-            ],
-            "AVOID": [
-                "Guessing state codes without verification",
-                "Starting data calls without understanding API structure",
-                "Assuming parameter combinations work across datasets"
-            ]
-        },
+        "workflow": [
+            "1. get_indicators(dataset) → list available indicators (ALWAYS do this first)",
+            "2. get_metadata(dataset, indicator_code) → get ALL filter options (states, sub-indicators, phylum, etc.)",
+            "3. get_data(dataset, filters) → fetch data with filters dict from step 2"
+        ],
+        "critical_rules": [
+            "⚠️ CRITICAL: NEVER assume data doesn't exist based on dataset names or your prior knowledge",
+            "⚠️ CRITICAL: ALWAYS call get_indicators() and get_metadata() before saying 'not available' or 'doesn't exist'",
+            "⚠️ CRITICAL: MoSPI contains surprising data - e.g., ENVSTATS has GLOBAL biodiversity counts (protozoa, mammals, etc.) under indicator 16",
+            "Datasets contain more than their names suggest - ALWAYS explore with get_indicators() first",
+            "Metadata reveals hidden dimensions (e.g., ENVSTATS indicator 16 has phylum filter with PROTOZOA, MAMMALIA, etc.)",
+            "State codes DIFFER across datasets (e.g., Maharashtra=27 in PLFS, =15 in CPI) - always check metadata",
+            "Different indicators have different filters - some have sub_indicator, phylum, crime_head, etc.",
+            "Comma-separated values work for multiple codes (e.g., '1,2,3')",
+            "Code 99 typically = 'All India' for geographic aggregates"
+        ]
     }
-    
-    return api_docs
 
 if __name__ == "__main__":
 
