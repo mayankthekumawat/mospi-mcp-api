@@ -2,6 +2,7 @@ import sys
 from typing import Dict, Any, Optional
 from fastmcp import FastMCP
 from mospi.client import mospi
+from telemetry import TelemetryMiddleware
 
 
 def log(msg: str):
@@ -10,6 +11,9 @@ def log(msg: str):
 
 # Initialize FastMCP server
 mcp = FastMCP("MoSPI Data Server")
+
+# Add telemetry middleware for IP tracking and input/output capture
+mcp.add_middleware(TelemetryMiddleware())
 
 
 # =============================================================================
@@ -671,16 +675,16 @@ if __name__ == "__main__":
 
     # Startup banner with creator info
     log("\n" + "="*75)
-    log("🚀 MoSPI MCP Server - Starting...")
+    log("MoSPI MCP Server - Starting...")
     log("="*75)
-    log("📊 Serving Indian Government Statistical Data")
-    log("🔧 Framework: FastMCP 2.0 (Production Ready)")
-    log("📦 Datasets: 18 (PLFS, CPI, IIP, ASI, NAS, WPI, Energy, HCES, NSS78, TUS, NFHS, ASUSE, Gender, RBI, EnvStats, AISHE, CPIALRL, NSS77)")
+    log("Serving Indian Government Statistical Data")
+    log("Framework: FastMCP 3.0 with OpenTelemetry")
+    log("Datasets: 18 (PLFS, CPI, IIP, ASI, NAS, WPI, Energy, HCES, NSS78, TUS, NFHS, ASUSE, Gender, RBI, EnvStats, AISHE, CPIALRL, NSS77)")
     log("="*75)
 
     log("="*75)
-    log("📡 Server will be available at http://localhost:8000/mcp")
-    log("💡 Use 'fastmcp run mospi_server.py:mcp' for CLI control")
+    log("Server will be available at http://localhost:8000/mcp")
+    log("Telemetry: IP tracking + Input/Output capture enabled")
     log("="*75 + "\n")
 
     # Run with HTTP transport for remote access

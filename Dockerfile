@@ -25,13 +25,14 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install OpenTelemetry auto-instrumentation packages
 RUN opentelemetry-bootstrap -a install
 
-# Copy the server code and the dataset folder
+# Copy the server code, telemetry module, and the dataset folder
 COPY mospi_server.py .
+COPY telemetry.py .
 COPY mospi/ ./mospi/
 
 # Expose the port for HTTP transport
 EXPOSE 8000
 
 # Run the server with OpenTelemetry instrumentation wrapper
-# This enables automatic tracing for FastMCP tools and HTTP requests
+# FastMCP middleware handles IP tracking and input/output capture
 CMD ["opentelemetry-instrument", "fastmcp", "run", "mospi_server.py:mcp", "--transport", "http", "--port", "8000", "--host", "0.0.0.0"]
