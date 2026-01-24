@@ -1,19 +1,19 @@
 """
 Telemetry middleware for MoSPI MCP Server.
 
-Uses FastMCP's native middleware system to capture:
+Uses FastMCP's tracer to create child spans with custom attributes:
 - Client IP address (from X-Forwarded-For or direct connection)
 - User-Agent header
 - Tool inputs and outputs
 
-All data is added to OpenTelemetry spans for visibility in Jaeger.
+All data is visible in Jaeger for analysis.
 """
 
 import json
 from typing import Any
 
 from fastmcp.server.middleware import Middleware, MiddlewareContext
-from opentelemetry import trace
+from fastmcp.telemetry import get_tracer
 
 # Constants
 MAX_ATTRIBUTE_SIZE = 4096  # 4KB limit for span attributes
@@ -62,7 +62,7 @@ class TelemetryMiddleware(Middleware):
     """
     FastMCP middleware that captures telemetry data in OpenTelemetry spans.
 
-    Captures:
+    Creates a child span named 'tool.{tool_name}' with custom attributes:
     - client.ip: Client IP address
     - client.user_agent: User-Agent header
     - tool.name: Name of the tool being called
@@ -71,19 +71,20 @@ class TelemetryMiddleware(Middleware):
     - tool.output_size: Original size of output in bytes
     """
 
+    def __init__(self):
+        super().__init__()
+        self._tracer = get_tracer()
+
     async def on_call_tool(self, context: MiddlewareContext, call_next):
         """Hook that intercepts all tool calls."""
-        span = trace.get_current_span()
-
         # Extract tool info from the MCP message
-        # FastMCP uses context.message.name and context.message.arguments directly
-        tool_name = getattr(context.message, 'name', None)
+        tool_name = getattr(context.message, 'name', 'unknown')
         tool_args = getattr(context.message, 'arguments', None)
 
-        # Add pre-execution attributes to span
-        if span and span.is_recording():
-            if tool_name:
-                span.set_attribute("tool.name", tool_name)
+        # Create a child span using FastMCP's tracer
+        with self._tracer.start_as_current_span(f"tool.{tool_name}") as span:
+            # Add pre-execution attributes
+            span.set_attribute("tool.name", tool_name)
 
             if tool_args is not None:
                 input_str, _ = truncate_json(tool_args)
@@ -92,12 +93,10 @@ class TelemetryMiddleware(Middleware):
             # Extract client info from request context
             self._add_client_info_to_span(context, span)
 
-        # Execute the tool
-        result = await call_next(context)
+            # Execute the tool
+            result = await call_next(context)
 
-        # Add post-execution attributes
-        # FastMCP returns result with structured_content attribute
-        if span and span.is_recording():
+            # Add post-execution attributes
             output_data = getattr(result, 'structured_content', result)
             if output_data is not None:
                 output_str, output_size = truncate_json(output_data)
