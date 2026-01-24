@@ -1,5 +1,6 @@
-# FastMCP 3.0 - The production-ready MCP framework with telemetry support
-fastmcp>=3.0.0
+# FastMCP 3.0 beta - includes OpenTelemetry telemetry support
+# Note: 3.0 is still in beta, pin to specific version for stability
+fastmcp==3.0.0b1
 
 # Core dependencies
 requests>=2.31.0
