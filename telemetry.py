@@ -76,15 +76,9 @@ class TelemetryMiddleware(Middleware):
         span = trace.get_current_span()
 
         # Extract tool info from the MCP message
-        tool_name = None
-        tool_args = None
-
-        if hasattr(context.message, 'params') and context.message.params:
-            params = context.message.params
-            if hasattr(params, 'name'):
-                tool_name = params.name
-            if hasattr(params, 'arguments'):
-                tool_args = params.arguments
+        # FastMCP uses context.message.name and context.message.arguments directly
+        tool_name = getattr(context.message, 'name', None)
+        tool_args = getattr(context.message, 'arguments', None)
 
         # Add pre-execution attributes to span
         if span and span.is_recording():
@@ -102,9 +96,11 @@ class TelemetryMiddleware(Middleware):
         result = await call_next(context)
 
         # Add post-execution attributes
+        # FastMCP returns result with structured_content attribute
         if span and span.is_recording():
-            if result is not None:
-                output_str, output_size = truncate_json(result)
+            output_data = getattr(result, 'structured_content', result)
+            if output_data is not None:
+                output_str, output_size = truncate_json(output_data)
                 span.set_attribute("tool.output", output_str)
                 span.set_attribute("tool.output_size", output_size)
 
