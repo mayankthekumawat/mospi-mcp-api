@@ -102,7 +102,12 @@ class TelemetryMiddleware(Middleware):
 
         # Create a child span using FastMCP's tracer
         with self._tracer.start_as_current_span(f"tool.{tool_name}") as span:
-            print(f"[TELEMETRY] Span created for: {tool_name}", file=sys.stderr)
+            # DEBUG: Log trace and span IDs
+            ctx = span.get_span_context()
+            trace_id = format(ctx.trace_id, '032x') if ctx.trace_id else 'none'
+            span_id = format(ctx.span_id, '016x') if ctx.span_id else 'none'
+            print(f"[TELEMETRY] Span created - trace_id={trace_id}, span_id={span_id}", file=sys.stderr)
+            print(f"[TELEMETRY] Is recording: {span.is_recording()}", file=sys.stderr)
             # Add pre-execution attributes
             span.set_attribute("tool.name", tool_name)
 
