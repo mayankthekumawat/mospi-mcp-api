@@ -150,6 +150,18 @@ PARAM_ALIASES = {
     },
 }
 
+# Datasets that require indicator_code in get_data
+DATASETS_REQUIRING_INDICATOR = [
+    "PLFS", "NAS", "NSS78", "NSS77", "HCES", "ENERGY", "TUS",
+    "NFHS", "ASUSE", "GENDER", "ENVSTATS", "AISHE", "CPIALRL"
+]
+
+# RBI uses sub_indicator_code instead of indicator_code
+DATASETS_REQUIRING_SUB_INDICATOR = ["RBI"]
+
+# These don't use indicator_code
+DATASETS_NO_INDICATOR = ["CPI", "IIP", "WPI", "ASI"]
+
 
 def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
     """
@@ -322,68 +334,99 @@ def get_metadata(
         elif dataset == "PLFS":
             if indicator_code is None:
                 return {"error": "indicator_code is required for PLFS"}
-            return mospi.get_plfs_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+            result = mospi.get_plfs_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1)}
+            return result
 
         elif dataset == "NAS":
             if indicator_code is None:
                 return {"error": "indicator_code is required for NAS"}
-            return mospi.get_nas_filters(series=series or "Current", frequency_code=frequency_code or 1, indicator_code=indicator_code)
+            result = mospi.get_nas_filters(series=series or "Current", frequency_code=frequency_code or 1, indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1), "series": series or "Current"}
+            return result
 
         elif dataset == "NSS78":
             if indicator_code is None:
                 return {"error": "indicator_code is required for NSS78"}
-            return mospi.get_nss78_filters(indicator_code=indicator_code, sub_indicator_code=sub_indicator_code)
+            result = mospi.get_nss78_filters(indicator_code=indicator_code, sub_indicator_code=sub_indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+            return result
 
         elif dataset == "NSS77":
             if indicator_code is None:
                 return {"error": "indicator_code is required for NSS77"}
-            return mospi.get_nss77_filters(indicator_code=indicator_code)
+            result = mospi.get_nss77_filters(indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+            return result
 
         elif dataset == "HCES":
-            return mospi.get_hces_filters(indicator_code=indicator_code or 1)
+            ind_code = indicator_code or 1
+            result = mospi.get_hces_filters(indicator_code=ind_code)
+            result["_include_in_get_data"] = {"indicator_code": str(ind_code)}
+            return result
 
         elif dataset == "ENERGY":
-            return mospi.get_energy_filters(indicator_code=indicator_code or 1, use_of_energy_balance_code=use_of_energy_balance_code or 1)
+            ind_code = indicator_code or 1
+            energy_code = use_of_energy_balance_code or 1
+            result = mospi.get_energy_filters(indicator_code=ind_code, use_of_energy_balance_code=energy_code)
+            result["_include_in_get_data"] = {"indicator_code": str(ind_code), "use_of_energy_balance_code": str(energy_code)}
+            return result
 
         elif dataset == "TUS":
             if indicator_code is None:
                 return {"error": "indicator_code is required for TUS"}
-            return mospi.get_tus_filters(indicator_code=indicator_code)
+            result = mospi.get_tus_filters(indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+            return result
 
         elif dataset == "NFHS":
             if indicator_code is None:
                 return {"error": "indicator_code is required for NFHS"}
-            return mospi.get_nfhs_filters(indicator_code=indicator_code)
+            result = mospi.get_nfhs_filters(indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+            return result
 
         elif dataset == "ASUSE":
             if indicator_code is None:
                 return {"error": "indicator_code is required for ASUSE"}
-            return mospi.get_asuse_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+            result = mospi.get_asuse_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1)}
+            return result
 
         elif dataset == "GENDER":
             if indicator_code is None:
                 return {"error": "indicator_code is required for GENDER"}
-            return mospi.get_gender_filters(indicator_code=indicator_code)
+            result = mospi.get_gender_filters(indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+            return result
 
         elif dataset == "RBI":
             if indicator_code is None:
                 return {"error": "indicator_code (sub_indicator_code) is required for RBI"}
-            return mospi.get_rbi_filters(sub_indicator_code=indicator_code)
+            result = mospi.get_rbi_filters(sub_indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"sub_indicator_code": str(indicator_code)}
+            return result
 
         elif dataset == "ENVSTATS":
             if indicator_code is None:
                 return {"error": "indicator_code is required for ENVSTATS"}
-            return mospi.get_envstats_filters(indicator_code=indicator_code)
+            result = mospi.get_envstats_filters(indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+            return result
 
         elif dataset == "AISHE":
             if indicator_code is None:
                 return {"error": "indicator_code is required for AISHE"}
-            return mospi.get_aishe_filters(indicator_code=indicator_code)
+            result = mospi.get_aishe_filters(indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+            return result
 
         elif dataset == "CPIALRL":
             if indicator_code is None:
                 return {"error": "indicator_code is required for CPIALRL"}
-            return mospi.get_cpialrl_filters(indicator_code=indicator_code)
+            result = mospi.get_cpialrl_filters(indicator_code=indicator_code)
+            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+            return result
 
         else:
             return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
@@ -399,13 +442,18 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
 
     ⚠️ CRITICAL: Call get_metadata() first to get valid filter keys and values.
 
+    ⚠️ IMPORTANT: Always include values from _include_in_get_data field in your filters!
+    Most datasets require indicator_code - copy it from get_metadata response.
+
     Filter format:
     - Use 'id' values from metadata (e.g., "103" not "Dams")
     - Keys are auto-transformed (e.g., 'sector' -> 'sector_code' if needed)
+    - MUST include indicator_code for most datasets (check _include_in_get_data)
 
     Args:
         dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
         filters: Key-value pairs from get_metadata(). Use 'id' values as strings.
+                 Include indicator_code from _include_in_get_data field!
     """
     dataset = dataset.upper()
 
@@ -449,6 +497,21 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     api_dataset = dataset_map.get(dataset)
     if not api_dataset:
         return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
+
+    # Validate required parameters
+    if dataset in DATASETS_REQUIRING_INDICATOR:
+        if "indicator_code" not in filters:
+            return {
+                "error": f"indicator_code is required for {dataset}",
+                "hint": "Include the indicator_code from get_metadata's _include_in_get_data field"
+            }
+
+    if dataset in DATASETS_REQUIRING_SUB_INDICATOR:
+        if "sub_indicator_code" not in filters and "indicator_code" not in filters:
+            return {
+                "error": f"sub_indicator_code is required for {dataset}",
+                "hint": "Include the sub_indicator_code from get_metadata's _include_in_get_data field"
+            }
 
     # Transform filter keys to match API expectations
     transformed_filters = transform_filters(dataset, filters)
