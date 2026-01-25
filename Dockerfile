@@ -1,4 +1,4 @@
-# FastMCP 2.0 Production Dockerfile
+# FastMCP 3.0 Production Dockerfile with OpenTelemetry
 FROM python:3.11-slim
 
 # Set working directory inside the container
@@ -7,6 +7,11 @@ WORKDIR /app
 # Prevent Python from writing .pyc files and buffering stdout
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
+
+# OpenTelemetry configuration defaults (override at runtime)
+ENV OTEL_SERVICE_NAME=mospi-mcp-server
+ENV OTEL_TRACES_EXPORTER=otlp
+ENV OTEL_EXPORTER_OTLP_PROTOCOL=grpc
 
 # Install system dependencies (needed for pandas/numpy/openpyxl)
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -17,13 +22,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the server code and the dataset folder
+# Install OpenTelemetry auto-instrumentation packages
+RUN opentelemetry-bootstrap -a install
+
+# Copy the server code, telemetry module, and the dataset folder
 COPY mospi_server.py .
+COPY telemetry.py .
 COPY mospi/ ./mospi/
 
 # Expose the port for HTTP transport
 EXPOSE 8000
 
-# Run the server using FastMCP CLI with HTTP transport
-# FastMCP 2.0 handles the web server internally
-CMD ["fastmcp", "run", "mospi_server.py:mcp", "--transport", "http", "--port", "8000", "--host", "0.0.0.0"]
+# Run the server with OpenTelemetry instrumentation wrapper
+# FastMCP middleware handles IP tracking and input/output capture
+CMD ["opentelemetry-instrument", "fastmcp", "run", "mospi_server.py:mcp", "--transport", "http", "--port", "8000", "--host", "0.0.0.0"]

@@ -1,8 +1,15 @@
-# FastMCP 2.0 - The production-ready MCP framework
-fastmcp>=2.0.0
+# FastMCP 3.0 beta - includes OpenTelemetry telemetry support
+# Note: 3.0 is still in beta, pin to specific version for stability
+fastmcp==3.0.0b1
 
 # Core dependencies
 requests>=2.31.0
+
+# OpenTelemetry instrumentation
+opentelemetry-api>=1.27.0
+opentelemetry-distro>=0.48b0
+opentelemetry-exporter-otlp>=1.27.0
+opentelemetry-instrumentation-requests>=0.48b0
 
 # Testing requirements
 pytest>=7.4.0
