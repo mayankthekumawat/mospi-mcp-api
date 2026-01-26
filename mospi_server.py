@@ -325,13 +325,19 @@ def get_metadata(
 
     try:
         if dataset == "CPI":
-            return mospi.get_cpi_filters(base_year=base_year or "2012", level=level or "Group")
+            result = mospi.get_cpi_filters(base_year=base_year or "2012", level=level or "Group")
+            result["_include_in_get_data"] = {"base_year": base_year or "2012"}
+            return result
 
         elif dataset == "IIP":
-            return mospi.get_iip_filters(base_year=base_year or "2011-12", frequency=frequency or "Annually")
+            result = mospi.get_iip_filters(base_year=base_year or "2011-12", frequency=frequency or "Annually")
+            result["_include_in_get_data"] = {"base_year": base_year or "2011-12"}
+            return result
 
         elif dataset == "ASI":
-            return mospi.get_asi_filters(classification_year=classification_year or "2008")
+            result = mospi.get_asi_filters(classification_year=classification_year or "2008")
+            result["_include_in_get_data"] = {"classification_year": classification_year or "2008"}
+            return result
 
         elif dataset == "WPI":
             return mospi.get_wpi_filters()
