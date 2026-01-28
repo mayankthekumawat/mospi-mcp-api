@@ -248,6 +248,11 @@ def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, 
         "PLFS": mospi.get_plfs_indicators,
         "NAS": mospi.get_nas_indicators,
         "ENERGY": mospi.get_energy_indicators,
+        # Special datasets - return guidance instead of indicators
+        "CPI": lambda: {"message": "CPI uses levels (Group/Item) instead of indicators. Call get_metadata with base_year and level params.", "dataset": "CPI"},
+        "IIP": lambda: {"message": "IIP uses categories instead of indicators. Call get_metadata with base_year and frequency params.", "dataset": "IIP"},
+        "WPI": lambda: {"message": "WPI uses hierarchical commodity codes. Call get_metadata to see available groups/items.", "dataset": "WPI"},
+        "ASI": lambda: {"message": "ASI uses classification years. Call get_metadata with classification_year param.", "dataset": "ASI"},
         # v2: Uncomment for full release
         # "NSS78": mospi.get_nss78_indicators,
         # "NSS77": mospi.get_nss77_indicators,
@@ -261,17 +266,6 @@ def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, 
         # "AISHE": mospi.get_aishe_indicators,
         # "CPIALRL": mospi.get_cpialrl_indicators,
     }
-
-    # Datasets without traditional indicator lists
-    special_datasets = {
-        "CPI": "CPI uses levels (Group/Item) instead of indicators. Call get_metadata with base_year and level params.",
-        "IIP": "IIP uses categories instead of indicators. Call get_metadata with base_year and frequency params.",
-        "WPI": "WPI uses hierarchical commodity codes. Call get_metadata to see available groups/items.",
-        "ASI": "ASI uses classification years. Call get_metadata with classification_year param.",
-    }
-
-    if dataset in special_datasets:
-        return {"message": special_datasets[dataset], "dataset": dataset, "_user_query": user_query}
 
     if dataset not in indicator_methods:
         return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS, "_user_query": user_query}
@@ -649,93 +643,93 @@ def know_about_mospi_api() -> Dict[str, Any]:
         "datasets": {
             "PLFS": {
                 "name": "Periodic Labour Force Survey",
-                "description": "Employment and unemployment statistics including LFPR, WPR, unemployment rate, wages, worker distribution by industry/sector",
-                "use_for": "Jobs, unemployment, wages, workforce participation queries"
+                "description": "8 indicators covering labor market dynamics: Labour Force Participation Rate (LFPR), Worker Population Ratio (WPR), Unemployment Rate (UR), worker distribution by sector/industry, employment conditions for regular wage employees, and earnings data across three employment types—regular wages, casual labor, and self-employment.",
+                "use_for": "Jobs, unemployment, wages, workforce participation, employment conditions"
             },
             "CPI": {
                 "name": "Consumer Price Index",
-                "description": "Inflation data by commodity groups and 600+ individual items. CPI_Group supports state-level, CPI_Item is All-India only",
-                "use_for": "Inflation, price indices, cost of living queries"
+                "description": "Hierarchical commodity structure (Groups and Items) with base years 2010/2012. Tracks consumer inflation across 600+ items organized into food, fuel, housing, clothing, and miscellaneous categories. Supports state-level analysis at group level and All-India analysis at item level.",
+                "use_for": "Retail inflation, price indices, cost of living, commodity price trends"
             },
             "IIP": {
                 "name": "Index of Industrial Production",
-                "description": "Industrial output indices - annual and monthly. Covers manufacturing, mining, electricity by use-based categories",
-                "use_for": "Industrial growth, manufacturing output, sectoral production"
+                "description": "Category-based structure with base years (1993-94, 2004-05, 2011-12) and frequency options (monthly/annual). Measures industrial output across manufacturing, mining, and electricity sectors using use-based classification (basic goods, capital goods, intermediate goods, consumer durables/non-durables).",
+                "use_for": "Industrial growth, manufacturing output, sectoral production tracking"
             },
             "ASI": {
                 "name": "Annual Survey of Industries",
-                "description": "Factory sector statistics - output, employment, wages, capital, productivity across 57 indicators by NIC codes",
-                "use_for": "Factory performance, industrial employment, manufacturing deep-dive"
+                "description": "57 indicators providing deep factory-sector analytics: capital structure (fixed/working capital, investments), production metrics (output, inputs, value added), employment details (workers by gender, contract status, mandays), wage components (salaries, bonuses, employer contributions), fuel consumption patterns, and profitability measures. Uses NIC classification across 4 classification years (1987-2008).",
+                "use_for": "Factory performance, industrial employment, manufacturing deep-dive, capital analysis"
             },
             "NAS": {
                 "name": "National Accounts Statistics",
-                "description": "GDP and macroeconomic aggregates - production, expenditure, income approaches. Annual and quarterly frequency",
-                "use_for": "GDP, economic growth, national income, sectoral contribution"
+                "description": "22 annual + 11 quarterly indicators covering macroeconomic aggregates: GDP and GVA (production approach), consumption (private/government), capital formation (fixed, change in stock, valuables), trade (exports/imports), national income (GNI, disposable income), savings, and growth rates. Both Current and Back series available.",
+                "use_for": "GDP, economic growth, national income, sectoral contribution, macro analysis"
             },
             "WPI": {
                 "name": "Wholesale Price Index",
-                "description": "Wholesale price inflation with hierarchical commodity classification - major groups, groups, sub-groups, 600+ items",
+                "description": "Hierarchical commodity structure with 1000+ items across 5 levels: Major Groups (Primary articles, Fuel & power, Manufactured products, Food index) → Groups (22) → Sub-groups (90+) → Sub-sub-groups → Items. Tracks wholesale/producer price inflation monthly.",
                 "use_for": "Wholesale inflation, producer prices, commodity price trends"
             },
             "ENERGY": {
                 "name": "Energy Statistics",
-                "description": "Energy balance in KToE/PetaJoules - supply and consumption by commodity (coal, oil, gas, renewables) and end-use sector",
-                "use_for": "Energy production, consumption patterns, fuel mix, sectoral energy use"
+                "description": "2 indicators (KToE and PetaJoules) measuring energy balance across supply and consumption dimensions. Covers all energy commodities (coal, oil, gas, renewables, electricity) and tracks energy flows through production, transformation, and end-use sectors.",
+                "use_for": "Energy production, consumption patterns, fuel mix, sectoral energy use, climate analysis"
             },
             # v2: Uncomment for full release
             # "HCES": {
             #     "name": "Household Consumption Expenditure Survey",
-            #     "description": "Monthly per capita expenditure (MPCE) across item categories, fractile classes, household types, social groups. Includes Gini coefficient",
-            #     "use_for": "Consumer spending, poverty analysis, inequality, expenditure patterns"
+            #     "description": "9 indicators analyzing consumption patterns: MPCE (overall and across 12 fractile classes), expenditure by broad categories (food/non-food), quantity and value of consumption, breakdowns by household type and social group, plus Gini coefficient for inequality measurement.",
+            #     "use_for": "Consumer spending, poverty analysis, inequality, expenditure patterns, welfare analysis"
             # },
             # "NSS78": {
             #     "name": "NSS 78th Round - Living Conditions",
-            #     "description": "Household amenities, migration, sanitation, drinking water, mobile/internet usage, transport access, asset ownership",
-            #     "use_for": "Living standards, migration, digital access, household amenities"
+            #     "description": "14 indicators on household living standards: drinking water access (improved sources, piped supply), sanitation (exclusive latrines, handwashing facilities), digital connectivity (mobile phones, broadband, mass media), transport access, household assets, sources of finance, and migration patterns. From 2020-21 survey.",
+            #     "use_for": "Living standards, migration, digital access, household amenities, sanitation"
             # },
             # "NSS77": {
             #     "name": "NSS 77th Round - Land & Livestock",
-            #     "description": "Agricultural holdings, farm income/expenses, crop production, livestock ownership, agricultural loans and insurance (33 indicators)",
-            #     "use_for": "Agriculture, land holdings, farm economics, rural livelihoods"
+            #     "description": "33 indicators on agricultural households: land ownership and possession (by size class, leasing patterns), livestock holdings, farm economics (income, expenses, crop production, GVA), crop marketing (disposal agencies, MSP awareness), input usage, agricultural loans and insurance coverage.",
+            #     "use_for": "Agriculture, land holdings, farm economics, rural livelihoods, crop marketing"
             # },
             # "TUS": {
             #     "name": "Time Use Survey",
-            #     "description": "How people spend time - paid work, unpaid domestic work, caregiving, leisure. 41 indicators by ICATUS activity classification",
+            #     "description": "41 indicators measuring time allocation: participation rates and minutes spent in paid work, unpaid domestic/care work, and other activities. Breakdowns by major/non-major activity status, marital status, education level, UMPCE quintiles, social groups, age groups, and SNA/Non-SNA classification.",
             #     "use_for": "Unpaid work, gender time gap, work-life patterns, caregiving burden"
             # },
             # "NFHS": {
             #     "name": "National Family Health Survey",
-            #     "description": "Health indicators - maternal/child health, nutrition, immunization, fertility, family planning, women's empowerment (21 indicators)",
-            #     "use_for": "Health outcomes, maternal care, child nutrition, fertility rates"
+            #     "description": "21 indicators on health and demographics: population profile, fertility (TFR, age-specific, adolescent), mortality (infant, child), family planning, maternal/delivery care, child health (vaccinations, nutrition), adult nutrition (BMI, anaemia), chronic conditions, cancer screening, HIV awareness, women's empowerment, and gender-based violence.",
+            #     "use_for": "Health outcomes, maternal care, child nutrition, fertility rates, women's welfare"
             # },
             # "ASUSE": {
             #     "name": "Annual Survey of Unincorporated Enterprises",
-            #     "description": "Informal sector statistics - employment, GVA, expenses across 50 activity categories for OAEs and establishments (35 indicators)",
-            #     "use_for": "Informal economy, small enterprises, unorganized sector"
+            #     "description": "35 indicators on informal sector enterprises: establishment counts, ownership patterns (by education, social group), operational characteristics (location, working hours), digital adoption (computers, internet), registration status, worker composition (by employment type, gender), and economic performance (GVA, emoluments).",
+            #     "use_for": "Informal economy, small enterprises, unorganized sector, MSME analysis"
             # },
             # "GENDER": {
             #     "name": "Gender Statistics",
-            #     "description": "147 indicators covering sex ratio, fertility, mortality, health, education, labour, time use, financial inclusion, political participation, crimes against women",
-            #     "use_for": "Gender gaps, women's welfare, sex-disaggregated analysis"
+            #     "description": "147 indicators across all domains: demographics (sex ratio, fertility, mortality), health (maternal mortality, immunization, nutrition), education (literacy gaps, enrollment, GER, GPI), labor (LFPR, WPR, wages), time use, financial inclusion (bank accounts, SHGs), political participation, leadership, and crimes against women.",
+            #     "use_for": "Gender gaps, women's welfare, sex-disaggregated analysis, policy monitoring"
             # },
             # "RBI": {
             #     "name": "RBI Statistics",
-            #     "description": "External sector data - foreign trade by country/commodity, balance of payments, forex rates (155 currencies), external debt, forex reserves (39 indicators)",
+            #     "description": "39 indicators on external sector: foreign trade (direction by country, commodity exports/imports in USD/INR), balance of payments (overall BoP, invisibles—quarterly and annual), external debt, forex reserves, NRI deposits, and exchange rates (155 currencies, SDR, monthly averages, forward premia).",
             #     "use_for": "Trade, forex rates, BoP, external debt, currency analysis"
             # },
             # "ENVSTATS": {
             #     "name": "Environment Statistics",
-            #     "description": "124 indicators including air/water quality, forest cover, waste, biodiversity, climate, environmental expenditure",
-            #     "use_for": "Pollution, forests, climate data, environmental indicators"
+            #     "description": "124 indicators covering: climate (temperature, rainfall, cyclones), water resources (wetlands, rivers, groundwater, water quality), land (soil types, degradation), forests (area, cover, carbon stock), biodiversity (faunal diversity including global species counts), minerals, energy reserves, agriculture, pollution (air, noise), waste management, natural disasters, and environmental expenditure.",
+            #     "use_for": "Pollution, forests, climate data, biodiversity, environmental indicators"
             # },
             # "AISHE": {
             #     "name": "All India Survey on Higher Education",
-            #     "description": "Universities, colleges, student enrollment, GER, GPI, teacher counts by institution type, social group, gender (9 indicators)",
+            #     "description": "9 indicators on higher education: institution counts (universities, colleges), student enrollment (total, by social group, PWD, minority), Gross Enrollment Ratio (GER) by social group, Gender Parity Index (GPI), Pupil-Teacher Ratio (PTR), and teacher counts.",
             #     "use_for": "Higher education access, enrollment, gender parity in education"
             # },
             # "CPIALRL": {
             #     "name": "CPI for Agricultural/Rural Labourers",
-            #     "description": "Separate CPI series for agricultural labourers (AL) and rural labourers (RL) - general index and commodity group indices",
+            #     "description": "2 indicators: General Index and Group Index for two worker categories—Agricultural Labourers (AL) and Rural Labourers (RL). Separate inflation series measuring cost of living for India's most vulnerable rural workforce segments.",
             #     "use_for": "Rural inflation, agricultural worker cost of living"
             # }
         },
