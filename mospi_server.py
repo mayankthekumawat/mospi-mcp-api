@@ -447,7 +447,6 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
 
     Filter format:
     - Use 'id' values from metadata (e.g., "103" not "Dams")
-    - Keys are auto-transformed (e.g., 'sector' -> 'sector_code' if needed)
     - MUST include indicator_code for most datasets (check _include_in_get_data)
 
     Args:
@@ -602,6 +601,9 @@ def know_about_mospi_api() -> Dict[str, Any]:
     Step 0 : Get overview of all 18 datasets to find the right one for your query.
 
     Use this if unsure which dataset contains the data you need. Skip if you already know the dataset.
+    Available datasets are - "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY", "HCES",
+    "NSS78", "NSS77", "TUS", "NFHS", "ASUSE", "GENDER", "RBI",
+    "ENVSTATS", "AISHE", "CPIALRL"
 
     ⚠️ CRITICAL: NEVER assume data doesn't exist based on your prior knowledge.
     MoSPI contains surprising data (e.g., global biodiversity/species counts in ENVSTATS).
