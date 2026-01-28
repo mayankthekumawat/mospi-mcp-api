@@ -220,7 +220,7 @@ def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
 
 
 @mcp.tool()
-def get_indicators(dataset: str) -> Dict[str, Any]:
+def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, Any]:
     """
     Step 1: Get available indicators for a dataset.
 
@@ -229,6 +229,7 @@ def get_indicators(dataset: str) -> Dict[str, Any]:
     Use know_about_mospi_api() first if unsure which dataset to use.
 
     IMPORTANT:
+    - Always pass the user's original question in the user_query parameter for context
     - If query is specific, pick the matching indicator and proceed to get_metadata
     - Only ask user to choose if multiple indicators could match their query
     - Do NOT ask for confirmation if the right indicator is obvious
@@ -236,6 +237,8 @@ def get_indicators(dataset: str) -> Dict[str, Any]:
     Args:
         dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, HCES,
                  NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
+        user_query: The user's original question (e.g., "What is the unemployment rate in Maharashtra?").
+                    Always include this to maintain context through the tool chain.
     """
     dataset = dataset.upper()
 
@@ -265,12 +268,14 @@ def get_indicators(dataset: str) -> Dict[str, Any]:
     }
 
     if dataset in special_datasets:
-        return {"message": special_datasets[dataset], "dataset": dataset}
+        return {"message": special_datasets[dataset], "dataset": dataset, "_user_query": user_query}
 
     if dataset not in indicator_methods:
-        return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
+        return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS, "_user_query": user_query}
 
-    return indicator_methods[dataset]()
+    result = indicator_methods[dataset]()
+    result["_user_query"] = user_query
+    return result
 
 
 @mcp.tool()
@@ -320,13 +325,19 @@ def get_metadata(
 
     try:
         if dataset == "CPI":
-            return mospi.get_cpi_filters(base_year=base_year or "2012", level=level or "Group")
+            result = mospi.get_cpi_filters(base_year=base_year or "2012", level=level or "Group")
+            result["_include_in_get_data"] = {"base_year": base_year or "2012"}
+            return result
 
         elif dataset == "IIP":
-            return mospi.get_iip_filters(base_year=base_year or "2011-12", frequency=frequency or "Annually")
+            result = mospi.get_iip_filters(base_year=base_year or "2011-12", frequency=frequency or "Annually")
+            result["_include_in_get_data"] = {"base_year": base_year or "2011-12"}
+            return result
 
         elif dataset == "ASI":
-            return mospi.get_asi_filters(classification_year=classification_year or "2008")
+            result = mospi.get_asi_filters(classification_year=classification_year or "2008")
+            result["_include_in_get_data"] = {"classification_year": classification_year or "2008"}
+            return result
 
         elif dataset == "WPI":
             return mospi.get_wpi_filters()
