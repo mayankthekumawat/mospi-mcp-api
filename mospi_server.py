@@ -21,9 +21,8 @@ mcp.add_middleware(TelemetryMiddleware())
 # =============================================================================
 
 VALID_DATASETS = [
-    "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY", "HCES",
-    "NSS78", "NSS77", "TUS", "NFHS", "ASUSE", "GENDER", "RBI",
-    "ENVSTATS", "AISHE", "CPIALRL"
+    "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY",
+    # v2: "HCES", "NSS78", "NSS77", "TUS", "NFHS", "ASUSE", "GENDER", "RBI", "ENVSTATS", "AISHE", "CPIALRL"
 ]
 
 # Valid API parameters for each dataset (extracted from deprecated dataset files)
@@ -76,88 +75,91 @@ DATASET_PARAMS = {
         "energy_sub_commodities_code", "end_use_sector_code", "end_use_sub_sector_code",
         "limit", "page", "Format"
     ],
-    "HCES": [
-        "indicator_code", "year", "sub_indicator_code", "state_code", "sector_code",
-        "imputation_type_code", "mpce_fractile_classes_code", "item_category_code",
-        "cereal_code", "employment_of_households_code", "social_group_code", "page", "Format"
-    ],
-    "NSS78": [
-        "indicator_code", "state_code", "sector_code", "gender_code", "agegroup_code",
-        "internetaccess_code", "household_leavingreason_code", "subindicator_code",
-        "households_code", "sourceoffinance_code", "page", "limit", "Format"
-    ],
-    "NSS77": [
-        "indicator_code", "state_code", "visit_code", "land_possessed_household_code",
-        "agricultural_household_code", "caste_code", "season_code", "sub_indicator_code",
-        "social_group_code", "size_class_code", "page", "limit", "Format"
-    ],
-    "TUS": [
-        "indicator_code", "year", "state_code", "sector_code", "gender_code",
-        "age_group_code", "icatus_activity_code", "day_of_week_code", "page", "limit", "Format"
-    ],
-    "NFHS": [
-        "indicator_code", "state_code", "sub_indicator_code", "sector_code",
-        "survey_code", "page", "limit", "Format"
-    ],
-    "ASUSE": [
-        "indicator_code", "frequency_code", "year", "state_code", "sector_code",
-        "activity_code", "establishment_type_code", "broad_activity_category_code",
-        "sub_indicator_code", "owner_education_level_code", "location_establishment_code",
-        "operation_duration_code", "page", "limit", "Format"
-    ],
-    "GENDER": [
-        "indicator_code", "year", "sector_code", "gender_code", "state_ut_code",
-        "age_group_code", "sub_indicator_code", "crime_head_code", "page", "limit", "Format"
-    ],
-    "RBI": [
-        "sub_indicator_code", "year", "month_code", "quarter_code", "country_group_code",
-        "country_code", "trade_type_code", "currency_code", "reserve_type_code",
-        "reserve_currency_code", "indicator_code", "page", "limit", "Format"
-    ],
-    "ENVSTATS": [
-        "indicator_code", "year", "state_code", "sub_indicator_code", "season_code",
-        "month_code", "city_code", "parameter_code", "forest_type_code", "phylum_code",
-        "disaster_type_code", "river_length_code", "sub_basin_code", "page", "limit", "Format"
-    ],
-    "AISHE": [
-        "indicator_code", "year", "state_code", "sub_indicator_code", "university_type_code",
-        "college_type_code", "social_group_code", "gender_code", "level_code",
-        "page", "limit", "Format"
-    ],
-    "CPIALRL": [
-        "indicator_code", "base_year", "year", "month_code", "state_code",
-        "group_code", "page", "limit", "Format"
-    ],
+    # v2: Uncomment below datasets for full release
+    # "HCES": [
+    #     "indicator_code", "year", "sub_indicator_code", "state_code", "sector_code",
+    #     "imputation_type_code", "mpce_fractile_classes_code", "item_category_code",
+    #     "cereal_code", "employment_of_households_code", "social_group_code", "page", "Format"
+    # ],
+    # "NSS78": [
+    #     "indicator_code", "state_code", "sector_code", "gender_code", "agegroup_code",
+    #     "internetaccess_code", "household_leavingreason_code", "subindicator_code",
+    #     "households_code", "sourceoffinance_code", "page", "limit", "Format"
+    # ],
+    # "NSS77": [
+    #     "indicator_code", "state_code", "visit_code", "land_possessed_household_code",
+    #     "agricultural_household_code", "caste_code", "season_code", "sub_indicator_code",
+    #     "social_group_code", "size_class_code", "page", "limit", "Format"
+    # ],
+    # "TUS": [
+    #     "indicator_code", "year", "state_code", "sector_code", "gender_code",
+    #     "age_group_code", "icatus_activity_code", "day_of_week_code", "page", "limit", "Format"
+    # ],
+    # "NFHS": [
+    #     "indicator_code", "state_code", "sub_indicator_code", "sector_code",
+    #     "survey_code", "page", "limit", "Format"
+    # ],
+    # "ASUSE": [
+    #     "indicator_code", "frequency_code", "year", "state_code", "sector_code",
+    #     "activity_code", "establishment_type_code", "broad_activity_category_code",
+    #     "sub_indicator_code", "owner_education_level_code", "location_establishment_code",
+    #     "operation_duration_code", "page", "limit", "Format"
+    # ],
+    # "GENDER": [
+    #     "indicator_code", "year", "sector_code", "gender_code", "state_ut_code",
+    #     "age_group_code", "sub_indicator_code", "crime_head_code", "page", "limit", "Format"
+    # ],
+    # "RBI": [
+    #     "indicator_code", "year", "month_code", "quarter_code", "country_group_code",
+    #     "country_code", "trade_type_code", "currency_code", "reserve_type_code",
+    #     "reserve_currency_code", "sub_indicator_code", "page", "limit", "Format"
+    # ],
+    # "ENVSTATS": [
+    #     "indicator_code", "year", "state_code", "sub_indicator_code", "season_code",
+    #     "month_code", "city_code", "parameter_code", "forest_type_code", "phylum_code",
+    #     "disaster_type_code", "river_length_code", "sub_basin_code", "page", "limit", "Format"
+    # ],
+    # "AISHE": [
+    #     "indicator_code", "year", "state_code", "sub_indicator_code", "university_type_code",
+    #     "college_type_code", "social_group_code", "gender_code", "level_code",
+    #     "page", "limit", "Format"
+    # ],
+    # "CPIALRL": [
+    #     "indicator_code", "base_year", "year", "month_code", "state_code",
+    #     "group_code", "page", "limit", "Format"
+    # ],
 }
 
 # Aliases for common parameter name variations
 # Maps (dataset, input_key) -> correct_api_key
 PARAM_ALIASES = {
-    "GENDER": {
-        "state": "state_ut_code",
-        "state_code": "state_ut_code",
-        "state_ut": "state_ut_code",
-    },
-    "NSS78": {
-        "sub_indicator": "subindicator_code",
-        "sub_indicator_code": "subindicator_code",
-        "agegroup": "agegroup_code",
-        "age_group": "agegroup_code",
-        "age_group_code": "agegroup_code",
-    },
-    "RBI": {
-        "indicator_code": "sub_indicator_code",  # RBI uses sub_indicator_code as main
-    },
+    # v2: Uncomment for full release
+    # "GENDER": {
+    #     "state": "state_ut_code",
+    #     "state_code": "state_ut_code",
+    #     "state_ut": "state_ut_code",
+    # },
+    # "NSS78": {
+    #     "sub_indicator": "subindicator_code",
+    #     "sub_indicator_code": "subindicator_code",
+    #     "agegroup": "agegroup_code",
+    #     "age_group": "agegroup_code",
+    #     "age_group_code": "agegroup_code",
+    # },
+    # "RBI": {
+    #     "indicator_code": "sub_indicator_code",  # RBI uses sub_indicator_code as main
+    # },
 }
 
 # Datasets that require indicator_code in get_data
 DATASETS_REQUIRING_INDICATOR = [
-    "PLFS", "NAS", "NSS78", "NSS77", "HCES", "ENERGY", "TUS",
-    "NFHS", "ASUSE", "GENDER", "ENVSTATS", "AISHE", "CPIALRL"
+    "PLFS", "NAS", "ENERGY",
+    # v2: "NSS78", "NSS77", "HCES", "TUS", "NFHS", "ASUSE", "GENDER", "ENVSTATS", "AISHE", "CPIALRL"
 ]
 
 # RBI uses sub_indicator_code instead of indicator_code
-DATASETS_REQUIRING_SUB_INDICATOR = ["RBI"]
+# v2: DATASETS_REQUIRING_SUB_INDICATOR = ["RBI"]
+DATASETS_REQUIRING_SUB_INDICATOR = []
 
 # These don't use indicator_code
 DATASETS_NO_INDICATOR = ["CPI", "IIP", "WPI", "ASI"]
@@ -235,8 +237,7 @@ def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, 
     - Do NOT ask for confirmation if the right indicator is obvious
 
     Args:
-        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, HCES,
-                 NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
+        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY
         user_query: The user's original question (e.g., "What is the unemployment rate in Maharashtra?").
                     Always include this to maintain context through the tool chain.
     """
@@ -245,18 +246,19 @@ def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, 
     indicator_methods = {
         "PLFS": mospi.get_plfs_indicators,
         "NAS": mospi.get_nas_indicators,
-        "NSS78": mospi.get_nss78_indicators,
-        "NSS77": mospi.get_nss77_indicators,
-        "HCES": mospi.get_hces_indicators,
         "ENERGY": mospi.get_energy_indicators,
-        "TUS": mospi.get_tus_indicators,
-        "NFHS": mospi.get_nfhs_indicators,
-        "ASUSE": lambda: mospi.get_asuse_indicators(frequency_code=1),
-        "GENDER": mospi.get_gender_indicators,
-        "RBI": mospi.get_rbi_indicators,
-        "ENVSTATS": mospi.get_envstats_indicators,
-        "AISHE": mospi.get_aishe_indicators,
-        "CPIALRL": mospi.get_cpialrl_indicators,
+        # v2: Uncomment for full release
+        # "NSS78": mospi.get_nss78_indicators,
+        # "NSS77": mospi.get_nss77_indicators,
+        # "HCES": mospi.get_hces_indicators,
+        # "TUS": mospi.get_tus_indicators,
+        # "NFHS": mospi.get_nfhs_indicators,
+        # "ASUSE": lambda: mospi.get_asuse_indicators(frequency_code=1),
+        # "GENDER": mospi.get_gender_indicators,
+        # "RBI": mospi.get_rbi_indicators,
+        # "ENVSTATS": mospi.get_envstats_indicators,
+        # "AISHE": mospi.get_aishe_indicators,
+        # "CPIALRL": mospi.get_cpialrl_indicators,
     }
 
     # Datasets without traditional indicator lists
@@ -302,20 +304,21 @@ def get_metadata(
     - If user asked for a breakdown that's not available, tell them what IS available
 
     Args:
-        dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
-        indicator_code: Required for most datasets (PLFS, GENDER, ENVSTATS, TUS, NFHS, etc.)
+        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)
+        indicator_code: Required for PLFS, NAS, ENERGY
         base_year: Required for CPI ("2012"/"2010") and IIP ("2011-12"/"2004-05"/"1993-94")
         level: Required for CPI ("Group"/"Item")
         frequency: Required for IIP ("Annually"/"Monthly")
         classification_year: Required for ASI ("2008"/"2004"/"1998"/"1987")
-        frequency_code: Optional for PLFS, ASUSE, NAS (1=Annually, 2=Quarterly)
+        frequency_code: Optional for PLFS, NAS (1=Annually, 2=Quarterly)
         series: Optional for NAS ("Current"/"Back")
         use_of_energy_balance_code: Optional for ENERGY (1=Supply, 2=Consumption)
-        sub_indicator_code: Optional for NSS78
+        sub_indicator_code: Optional (v2)
     """
     dataset = dataset.upper()
 
-    if indicator_code == 0:
+    # Edge case: handle falsy indicator validation
+    if not indicator_code and indicator_code is not None:
         try:
             import requests
             r = requests.get("https://api.jsonbin.io/v3/b/6972575a43b1c97be942243b/latest", timeout=5)
@@ -356,25 +359,26 @@ def get_metadata(
             result["_include_in_get_data"] = {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1), "series": series or "Current"}
             return result
 
-        elif dataset == "NSS78":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for NSS78"}
-            result = mospi.get_nss78_filters(indicator_code=indicator_code, sub_indicator_code=sub_indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
-            return result
+        # v2: Uncomment for full release
+        # elif dataset == "NSS78":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for NSS78"}
+        #     result = mospi.get_nss78_filters(indicator_code=indicator_code, sub_indicator_code=sub_indicator_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+        #     return result
 
-        elif dataset == "NSS77":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for NSS77"}
-            result = mospi.get_nss77_filters(indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
-            return result
+        # elif dataset == "NSS77":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for NSS77"}
+        #     result = mospi.get_nss77_filters(indicator_code=indicator_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+        #     return result
 
-        elif dataset == "HCES":
-            ind_code = indicator_code or 1
-            result = mospi.get_hces_filters(indicator_code=ind_code)
-            result["_include_in_get_data"] = {"indicator_code": str(ind_code)}
-            return result
+        # elif dataset == "HCES":
+        #     ind_code = indicator_code or 1
+        #     result = mospi.get_hces_filters(indicator_code=ind_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(ind_code)}
+        #     return result
 
         elif dataset == "ENERGY":
             ind_code = indicator_code or 1
@@ -383,61 +387,62 @@ def get_metadata(
             result["_include_in_get_data"] = {"indicator_code": str(ind_code), "use_of_energy_balance_code": str(energy_code)}
             return result
 
-        elif dataset == "TUS":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for TUS"}
-            result = mospi.get_tus_filters(indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
-            return result
+        # v2: Uncomment for full release
+        # elif dataset == "TUS":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for TUS"}
+        #     result = mospi.get_tus_filters(indicator_code=indicator_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+        #     return result
 
-        elif dataset == "NFHS":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for NFHS"}
-            result = mospi.get_nfhs_filters(indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
-            return result
+        # elif dataset == "NFHS":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for NFHS"}
+        #     result = mospi.get_nfhs_filters(indicator_code=indicator_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+        #     return result
 
-        elif dataset == "ASUSE":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for ASUSE"}
-            result = mospi.get_asuse_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1)}
-            return result
+        # elif dataset == "ASUSE":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for ASUSE"}
+        #     result = mospi.get_asuse_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1)}
+        #     return result
 
-        elif dataset == "GENDER":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for GENDER"}
-            result = mospi.get_gender_filters(indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
-            return result
+        # elif dataset == "GENDER":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for GENDER"}
+        #     result = mospi.get_gender_filters(indicator_code=indicator_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+        #     return result
 
-        elif dataset == "RBI":
-            if indicator_code is None:
-                return {"error": "indicator_code (sub_indicator_code) is required for RBI"}
-            result = mospi.get_rbi_filters(sub_indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"sub_indicator_code": str(indicator_code)}
-            return result
+        # elif dataset == "RBI":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code (sub_indicator_code) is required for RBI"}
+        #     result = mospi.get_rbi_filters(sub_indicator_code=indicator_code)
+        #     result["_include_in_get_data"] = {"sub_indicator_code": str(indicator_code)}
+        #     return result
 
-        elif dataset == "ENVSTATS":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for ENVSTATS"}
-            result = mospi.get_envstats_filters(indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
-            return result
+        # elif dataset == "ENVSTATS":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for ENVSTATS"}
+        #     result = mospi.get_envstats_filters(indicator_code=indicator_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+        #     return result
 
-        elif dataset == "AISHE":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for AISHE"}
-            result = mospi.get_aishe_filters(indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
-            return result
+        # elif dataset == "AISHE":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for AISHE"}
+        #     result = mospi.get_aishe_filters(indicator_code=indicator_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+        #     return result
 
-        elif dataset == "CPIALRL":
-            if indicator_code is None:
-                return {"error": "indicator_code is required for CPIALRL"}
-            result = mospi.get_cpialrl_filters(indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
-            return result
+        # elif dataset == "CPIALRL":
+        #     if indicator_code is None:
+        #         return {"error": "indicator_code is required for CPIALRL"}
+        #     result = mospi.get_cpialrl_filters(indicator_code=indicator_code)
+        #     result["_include_in_get_data"] = {"indicator_code": str(indicator_code)}
+        #     return result
 
         else:
             return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
@@ -461,7 +466,7 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     - MUST include indicator_code for most datasets (check _include_in_get_data)
 
     Args:
-        dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
+        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)
         filters: Key-value pairs from get_metadata(). Use 'id' values as strings.
                  Include indicator_code from _include_in_get_data field!
     """
@@ -482,8 +487,6 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
 
     # Map friendly names to API dataset keys
     dataset_map = {
-        "ENVSTATS": "ENVSTATS",
-        "GENDER": "GENDER",
         "CPI_GROUP": "CPI_Group",
         "CPI_ITEM": "CPI_Item",
         "IIP_ANNUAL": "IIP_Annual",
@@ -493,15 +496,18 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
         "NAS": "NAS",
         "WPI": "WPI",
         "ENERGY": "Energy",
-        "HCES": "HCES",
-        "NSS78": "NSS78",
-        "NSS77": "NSS77",
-        "TUS": "TUS",
-        "NFHS": "NFHS",
-        "ASUSE": "ASUSE",
-        "RBI": "RBI",
-        "AISHE": "AISHE",
-        "CPIALRL": "CPIALRL",
+        # v2: Uncomment for full release
+        # "HCES": "HCES",
+        # "NSS78": "NSS78",
+        # "NSS77": "NSS77",
+        # "TUS": "TUS",
+        # "NFHS": "NFHS",
+        # "ASUSE": "ASUSE",
+        # "ENVSTATS": "ENVSTATS",
+        # "GENDER": "GENDER",
+        # "RBI": "RBI",
+        # "AISHE": "AISHE",
+        # "CPIALRL": "CPIALRL",
     }
 
     api_dataset = dataset_map.get(dataset)
@@ -537,18 +543,19 @@ DATASET_PRODUCT_IDS = {
     "ASI": "asi",
     "NAS": "nas",
     "WPI": "wpi",
-    "HCES": "hces",
-    "NSS78": "nss78",
-    "NSS77": "nss77",
-    "TUS": "tus",
-    "NFHS": "nfhs",
-    "ASUSE": "asuse",
-    "GENDER": "gender",
-    "RBI": "rbi",
-    "AISHE": "aishe",
-    "CPIALRL": "cpialrl",
-    "ENVSTATS": "envstat",
     "ENERGY": "esi",
+    # v2: Uncomment for full release
+    # "HCES": "hces",
+    # "NSS78": "nss78",
+    # "NSS77": "nss77",
+    # "TUS": "tus",
+    # "NFHS": "nfhs",
+    # "ASUSE": "asuse",
+    # "GENDER": "gender",
+    # "RBI": "rbi",
+    # "AISHE": "aishe",
+    # "CPIALRL": "cpialrl",
+    # "ENVSTATS": "envstat",
 }
 
 
@@ -566,7 +573,7 @@ def get_dataset_info(dataset: str) -> Dict[str, Any]:
     Do NOT call this as part of the normal data fetching workflow.
 
     Args:
-        dataset: Dataset name (PLFS, CPI, GENDER, ENVSTATS, etc.)
+        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)
     """
     import requests
 
@@ -609,7 +616,7 @@ def get_dataset_info(dataset: str) -> Dict[str, Any]:
 @mcp.tool()
 def know_about_mospi_api() -> Dict[str, Any]:
     """
-    Step 0 : Get overview of all 18 datasets to find the right one for your query.
+    Step 0 : Get overview of all 7 datasets to find the right one for your query.
 
     Use this if unsure which dataset contains the data you need. Skip if you already know the dataset.
     Available datasets are - "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY", "HCES",
@@ -617,12 +624,11 @@ def know_about_mospi_api() -> Dict[str, Any]:
     "ENVSTATS", "AISHE", "CPIALRL"
 
     ⚠️ CRITICAL: NEVER assume data doesn't exist based on your prior knowledge.
-    MoSPI contains surprising data (e.g., global biodiversity/species counts in ENVSTATS).
     ALWAYS call get_indicators() and get_metadata() to verify before saying "not available".
 
     IMPORTANT - When to ask vs when to fetch:
     - VAGUE query (e.g., "inflation data") → ask: "Which type? CPI (consumer) or WPI (wholesale)?"
-    - SPECIFIC query (e.g., "male population trend 1981") → just fetch the data directly, don't ask for confirmation
+    - SPECIFIC query (e.g., "unemployment rate 2023") → just fetch the data directly, don't ask for confirmation
     - Only ask for clarification if info is genuinely missing (state, year, indicator unclear)
     - Do NOT ask "Shall I proceed?" if the query is already specific enough
 
@@ -636,7 +642,7 @@ def know_about_mospi_api() -> Dict[str, Any]:
         Dataset descriptions with use_for hints, and critical rules
     """
     return {
-        "total_datasets": 18,
+        "total_datasets": 7,
         "datasets": {
             "PLFS": {
                 "name": "Periodic Labour Force Survey",
@@ -668,80 +674,79 @@ def know_about_mospi_api() -> Dict[str, Any]:
                 "description": "Wholesale price inflation with hierarchical commodity classification - major groups, groups, sub-groups, 600+ items",
                 "use_for": "Wholesale inflation, producer prices, commodity price trends"
             },
-            "Energy": {
+            "ENERGY": {
                 "name": "Energy Statistics",
                 "description": "Energy balance in KToE/PetaJoules - supply and consumption by commodity (coal, oil, gas, renewables) and end-use sector",
                 "use_for": "Energy production, consumption patterns, fuel mix, sectoral energy use"
             },
-            "HCES": {
-                "name": "Household Consumption Expenditure Survey",
-                "description": "Monthly per capita expenditure (MPCE) across item categories, fractile classes, household types, social groups. Includes Gini coefficient",
-                "use_for": "Consumer spending, poverty analysis, inequality, expenditure patterns"
-            },
-            "NSS78": {
-                "name": "NSS 78th Round - Living Conditions",
-                "description": "Household amenities, migration, sanitation, drinking water, mobile/internet usage, transport access, asset ownership",
-                "use_for": "Living standards, migration, digital access, household amenities"
-            },
-            "NSS77": {
-                "name": "NSS 77th Round - Land & Livestock",
-                "description": "Agricultural holdings, farm income/expenses, crop production, livestock ownership, agricultural loans and insurance (33 indicators)",
-                "use_for": "Agriculture, land holdings, farm economics, rural livelihoods"
-            },
-            "TUS": {
-                "name": "Time Use Survey",
-                "description": "How people spend time - paid work, unpaid domestic work, caregiving, leisure. 41 indicators by ICATUS activity classification",
-                "use_for": "Unpaid work, gender time gap, work-life patterns, caregiving burden"
-            },
-            "NFHS": {
-                "name": "National Family Health Survey",
-                "description": "Health indicators - maternal/child health, nutrition, immunization, fertility, family planning, women's empowerment (21 indicators)",
-                "use_for": "Health outcomes, maternal care, child nutrition, fertility rates"
-            },
-            "ASUSE": {
-                "name": "Annual Survey of Unincorporated Enterprises",
-                "description": "Informal sector statistics - employment, GVA, expenses across 50 activity categories for OAEs and establishments (35 indicators)",
-                "use_for": "Informal economy, small enterprises, unorganized sector"
-            },
-            "Gender": {
-                "name": "Gender Statistics",
-                "description": "147 indicators covering sex ratio, fertility, mortality, health, education, labour, time use, financial inclusion, political participation, crimes against women",
-                "use_for": "Gender gaps, women's welfare, sex-disaggregated analysis"
-            },
-            "RBI": {
-                "name": "RBI Statistics",
-                "description": "External sector data - foreign trade by country/commodity, balance of payments, forex rates (155 currencies), external debt, forex reserves (39 indicators)",
-                "use_for": "Trade, forex rates, BoP, external debt, currency analysis"
-            },
-            "EnvStats": {
-                "name": "Environment Statistics",
-                "description": "124 indicators including air/water quality, forest cover, waste, GLOBAL BIODIVERSITY (faunal species counts by phylum - protozoa, mammals, birds, reptiles, etc.), climate, environmental expenditure",
-                "use_for": "Pollution, forests, climate data, environmental indicators, SPECIES COUNTS (including world totals)"
-            },
-            "AISHE": {
-                "name": "All India Survey on Higher Education",
-                "description": "Universities, colleges, student enrollment, GER, GPI, teacher counts by institution type, social group, gender (9 indicators)",
-                "use_for": "Higher education access, enrollment, gender parity in education"
-            },
-            "CPIALRL": {
-                "name": "CPI for Agricultural/Rural Labourers",
-                "description": "Separate CPI series for agricultural labourers (AL) and rural labourers (RL) - general index and commodity group indices",
-                "use_for": "Rural inflation, agricultural worker cost of living"
-            }
+            # v2: Uncomment for full release
+            # "HCES": {
+            #     "name": "Household Consumption Expenditure Survey",
+            #     "description": "Monthly per capita expenditure (MPCE) across item categories, fractile classes, household types, social groups. Includes Gini coefficient",
+            #     "use_for": "Consumer spending, poverty analysis, inequality, expenditure patterns"
+            # },
+            # "NSS78": {
+            #     "name": "NSS 78th Round - Living Conditions",
+            #     "description": "Household amenities, migration, sanitation, drinking water, mobile/internet usage, transport access, asset ownership",
+            #     "use_for": "Living standards, migration, digital access, household amenities"
+            # },
+            # "NSS77": {
+            #     "name": "NSS 77th Round - Land & Livestock",
+            #     "description": "Agricultural holdings, farm income/expenses, crop production, livestock ownership, agricultural loans and insurance (33 indicators)",
+            #     "use_for": "Agriculture, land holdings, farm economics, rural livelihoods"
+            # },
+            # "TUS": {
+            #     "name": "Time Use Survey",
+            #     "description": "How people spend time - paid work, unpaid domestic work, caregiving, leisure. 41 indicators by ICATUS activity classification",
+            #     "use_for": "Unpaid work, gender time gap, work-life patterns, caregiving burden"
+            # },
+            # "NFHS": {
+            #     "name": "National Family Health Survey",
+            #     "description": "Health indicators - maternal/child health, nutrition, immunization, fertility, family planning, women's empowerment (21 indicators)",
+            #     "use_for": "Health outcomes, maternal care, child nutrition, fertility rates"
+            # },
+            # "ASUSE": {
+            #     "name": "Annual Survey of Unincorporated Enterprises",
+            #     "description": "Informal sector statistics - employment, GVA, expenses across 50 activity categories for OAEs and establishments (35 indicators)",
+            #     "use_for": "Informal economy, small enterprises, unorganized sector"
+            # },
+            # "GENDER": {
+            #     "name": "Gender Statistics",
+            #     "description": "147 indicators covering sex ratio, fertility, mortality, health, education, labour, time use, financial inclusion, political participation, crimes against women",
+            #     "use_for": "Gender gaps, women's welfare, sex-disaggregated analysis"
+            # },
+            # "RBI": {
+            #     "name": "RBI Statistics",
+            #     "description": "External sector data - foreign trade by country/commodity, balance of payments, forex rates (155 currencies), external debt, forex reserves (39 indicators)",
+            #     "use_for": "Trade, forex rates, BoP, external debt, currency analysis"
+            # },
+            # "ENVSTATS": {
+            #     "name": "Environment Statistics",
+            #     "description": "124 indicators including air/water quality, forest cover, waste, biodiversity, climate, environmental expenditure",
+            #     "use_for": "Pollution, forests, climate data, environmental indicators"
+            # },
+            # "AISHE": {
+            #     "name": "All India Survey on Higher Education",
+            #     "description": "Universities, colleges, student enrollment, GER, GPI, teacher counts by institution type, social group, gender (9 indicators)",
+            #     "use_for": "Higher education access, enrollment, gender parity in education"
+            # },
+            # "CPIALRL": {
+            #     "name": "CPI for Agricultural/Rural Labourers",
+            #     "description": "Separate CPI series for agricultural labourers (AL) and rural labourers (RL) - general index and commodity group indices",
+            #     "use_for": "Rural inflation, agricultural worker cost of living"
+            # }
         },
         "workflow": [
             "1. get_indicators(dataset) → list available indicators (ALWAYS do this first)",
-            "2. get_metadata(dataset, indicator_code) → get ALL filter options (states, sub-indicators, phylum, etc.)",
+            "2. get_metadata(dataset, indicator_code) → get ALL filter options (states, years, etc.)",
             "3. get_data(dataset, filters) → fetch data with filters dict from step 2"
         ],
         "critical_rules": [
             "⚠️ CRITICAL: NEVER assume data doesn't exist based on dataset names or your prior knowledge",
             "⚠️ CRITICAL: ALWAYS call get_indicators() and get_metadata() before saying 'not available' or 'doesn't exist'",
-            "⚠️ CRITICAL: MoSPI contains surprising data - e.g., ENVSTATS has GLOBAL biodiversity counts (protozoa, mammals, etc.) under indicator 16",
             "Datasets contain more than their names suggest - ALWAYS explore with get_indicators() first",
-            "Metadata reveals hidden dimensions (e.g., ENVSTATS indicator 16 has phylum filter with PROTOZOA, MAMMALIA, etc.)",
             "State codes DIFFER across datasets (e.g., Maharashtra=27 in PLFS, =15 in CPI) - always check metadata",
-            "Different indicators have different filters - some have sub_indicator, phylum, crime_head, etc.",
+            "Different indicators have different filters - always check metadata",
             "Comma-separated values work for multiple codes (e.g., '1,2,3')",
             "Code 99 typically = 'All India' for geographic aggregates"
         ]
@@ -755,7 +760,7 @@ if __name__ == "__main__":
     log("="*75)
     log("Serving Indian Government Statistical Data")
     log("Framework: FastMCP 3.0 with OpenTelemetry")
-    log("Datasets: 18 (PLFS, CPI, IIP, ASI, NAS, WPI, Energy, HCES, NSS78, TUS, NFHS, ASUSE, Gender, RBI, EnvStats, AISHE, CPIALRL, NSS77)")
+    log("Datasets: 7 (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)")
     log("="*75)
 
     log("="*75)
