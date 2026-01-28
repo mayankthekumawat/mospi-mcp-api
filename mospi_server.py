@@ -221,6 +221,7 @@ def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
     return transformed
 
 
+# v2: Additional datasets - HCES, NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
 @mcp.tool()
 def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, Any]:
     """
@@ -280,6 +281,7 @@ def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, 
     return result
 
 
+# v2: Additional datasets - HCES, NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
 @mcp.tool()
 def get_metadata(
     dataset: str,
@@ -451,6 +453,7 @@ def get_metadata(
         return {"error": str(e)}
 
 
+# v2: Additional datasets - HCES, NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
 @mcp.tool()
 def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     """
@@ -559,6 +562,7 @@ DATASET_PRODUCT_IDS = {
 }
 
 
+# v2: Additional datasets - HCES, NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
 @mcp.tool()
 def get_dataset_info(dataset: str) -> Dict[str, Any]:
     """
@@ -613,15 +617,14 @@ def get_dataset_info(dataset: str) -> Dict[str, Any]:
 
 
 # Comprehensive API documentation tool
+# v2: Additional datasets - HCES, NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
 @mcp.tool()
 def know_about_mospi_api() -> Dict[str, Any]:
     """
     Step 0 : Get overview of all 7 datasets to find the right one for your query.
 
     Use this if unsure which dataset contains the data you need. Skip if you already know the dataset.
-    Available datasets are - "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY", "HCES",
-    "NSS78", "NSS77", "TUS", "NFHS", "ASUSE", "GENDER", "RBI",
-    "ENVSTATS", "AISHE", "CPIALRL"
+    Available datasets: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY
 
     ⚠️ CRITICAL: NEVER assume data doesn't exist based on your prior knowledge.
     ALWAYS call get_indicators() and get_metadata() to verify before saying "not available".
