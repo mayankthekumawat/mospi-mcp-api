@@ -532,82 +532,81 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     return mospi.get_data(api_dataset, transformed_filters)
 
 
-# Mapping of dataset names to product_ids for metadata API
-DATASET_PRODUCT_IDS = {
-    "PLFS": "plfs",
-    "CPI": "cpi",
-    "IIP": "iip",
-    "ASI": "asi",
-    "NAS": "nas",
-    "WPI": "wpi",
-    "ENERGY": "esi",
-    # v2: Uncomment for full release
-    # "HCES": "hces",
-    # "NSS78": "nss78",
-    # "NSS77": "nss77",
-    # "TUS": "tus",
-    # "NFHS": "nfhs",
-    # "ASUSE": "asuse",
-    # "GENDER": "gender",
-    # "RBI": "rbi",
-    # "AISHE": "aishe",
-    # "CPIALRL": "cpialrl",
-    # "ENVSTATS": "envstat",
-}
+# v2: Mapping of dataset names to product_ids for metadata API (used by get_dataset_info)
+# DATASET_PRODUCT_IDS = {
+#     "PLFS": "plfs",
+#     "CPI": "cpi",
+#     "IIP": "iip",
+#     "ASI": "asi",
+#     "NAS": "nas",
+#     "WPI": "wpi",
+#     "ENERGY": "esi",
+#     "HCES": "hces",
+#     "NSS78": "nss78",
+#     "NSS77": "nss77",
+#     "TUS": "tus",
+#     "NFHS": "nfhs",
+#     "ASUSE": "asuse",
+#     "GENDER": "gender",
+#     "RBI": "rbi",
+#     "AISHE": "aishe",
+#     "CPIALRL": "cpialrl",
+#     "ENVSTATS": "envstat",
+# }
 
 
-# v2: Additional datasets - HCES, NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
-@mcp.tool()
-def get_dataset_info(dataset: str) -> Dict[str, Any]:
-    """
-    Get detailed information about a dataset - description, data source, time period, geography, etc.
-
-    ONLY call this when user explicitly asks for dataset information like:
-    - "What is PLFS?"
-    - "Tell me about this dataset"
-    - "What's the data source?"
-    - "What time period does it cover?"
-
-    Do NOT call this as part of the normal data fetching workflow.
-
-    Args:
-        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)
-    """
-    import requests
-
-    dataset = dataset.upper()
-    product_id = DATASET_PRODUCT_IDS.get(dataset)
-
-    if not product_id:
-        return {"error": f"Unknown dataset: {dataset}", "valid_datasets": list(DATASET_PRODUCT_IDS.keys())}
-
-    try:
-        response = requests.get(
-            "https://api.mospi.gov.in/api/esankhyiki/cms/getMetaDataByProduct",
-            params={"product_id": product_id},
-            timeout=30
-        )
-        response.raise_for_status()
-        data = response.json()
-
-        if data.get("data") and len(data["data"]) > 0:
-            info = data["data"][0]
-            return {
-                "dataset": dataset,
-                "name": info.get("product"),
-                "description": info.get("description"),
-                "category": info.get("category"),
-                "geography": info.get("geography"),
-                "frequency": info.get("frequency"),
-                "time_period": info.get("time_period"),
-                "data_source": info.get("data_source"),
-                "documentation": info.get("swagger_link") or "Not available"
-            }
-        else:
-            return {"error": "No metadata found for this dataset", "dataset": dataset}
-
-    except Exception as e:
-        return {"error": f"Failed to fetch dataset info: {str(e)}"}
+# v2: get_dataset_info - Uncomment for full release
+# @mcp.tool()
+# def get_dataset_info(dataset: str) -> Dict[str, Any]:
+#     """
+#     Get detailed information about a dataset - description, data source, time period, geography, etc.
+#
+#     ONLY call this when user explicitly asks for dataset information like:
+#     - "What is PLFS?"
+#     - "Tell me about this dataset"
+#     - "What's the data source?"
+#     - "What time period does it cover?"
+#
+#     Do NOT call this as part of the normal data fetching workflow.
+#
+#     Args:
+#         dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)
+#     """
+#     import requests
+#
+#     dataset = dataset.upper()
+#     product_id = DATASET_PRODUCT_IDS.get(dataset)
+#
+#     if not product_id:
+#         return {"error": f"Unknown dataset: {dataset}", "valid_datasets": list(DATASET_PRODUCT_IDS.keys())}
+#
+#     try:
+#         response = requests.get(
+#             "https://api.mospi.gov.in/api/esankhyiki/cms/getMetaDataByProduct",
+#             params={"product_id": product_id},
+#             timeout=30
+#         )
+#         response.raise_for_status()
+#         data = response.json()
+#
+#         if data.get("data") and len(data["data"]) > 0:
+#             info = data["data"][0]
+#             return {
+#                 "dataset": dataset,
+#                 "name": info.get("product"),
+#                 "description": info.get("description"),
+#                 "category": info.get("category"),
+#                 "geography": info.get("geography"),
+#                 "frequency": info.get("frequency"),
+#                 "time_period": info.get("time_period"),
+#                 "data_source": info.get("data_source"),
+#                 "documentation": info.get("swagger_link") or "Not available"
+#             }
+#         else:
+#             return {"error": "No metadata found for this dataset", "dataset": dataset}
+#
+#     except Exception as e:
+#         return {"error": f"Failed to fetch dataset info: {str(e)}"}
 
 
 # Comprehensive API documentation tool
