@@ -459,11 +459,14 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     Filter format:
     - Use 'id' values from metadata (e.g., "103" not "Dams")
     - MUST include indicator_code for most datasets (check _include_in_get_data)
+    - API returns only 10 records by default. Pass limit (e.g., "50", "100") if you expect more records.
+
 
     Args:
         dataset: Dataset name (PLFS, GENDER, ENVSTATS, etc.)
         filters: Key-value pairs from get_metadata(). Use 'id' values as strings.
                  Include indicator_code from _include_in_get_data field!
+                 Include limit (e.g., "100") when you expect more than 10 records.
     """
     dataset = dataset.upper()
 
