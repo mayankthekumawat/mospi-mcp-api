@@ -25,123 +25,32 @@ VALID_DATASETS = [
     # v2: "HCES", "NSS78", "NSS77", "TUS", "NFHS", "ASUSE", "GENDER", "RBI", "ENVSTATS", "AISHE", "CPIALRL"
 ]
 
-# Valid API parameters for each dataset (extracted from deprecated dataset files)
-# These are the EXACT param names the API expects
-DATASET_PARAMS = {
-    # PLFS: uses swagger/swagger_user_plfs.yaml
-    "CPI": [
-        "base_year", "series", "year", "month_code", "state_code", "group_code",
-        "subgroup_code", "sector_code", "item_code", "limit", "Format"
-    ],
-    "CPI_GROUP": [
-        "base_year", "series", "year", "month_code", "state_code", "group_code",
-        "subgroup_code", "sector_code", "limit", "Format"
-    ],
-    "CPI_ITEM": [
-        "base_year", "year", "month_code", "item_code", "limit", "Format"
-    ],
-    "IIP": [
-        "base_year", "financial_year", "year", "month_code", "category_code",
-        "subcategory_code", "limit", "type", "Format"
-    ],
-    "IIP_ANNUAL": [
-        "base_year", "financial_year", "category_code", "subcategory_code", "limit", "type", "Format"
-    ],
-    "IIP_MONTHLY": [
-        "base_year", "year", "month_code", "category_code", "subcategory_code", "limit", "type", "Format"
-    ],
-    "ASI": [
-        "classification_year", "sector_code", "year", "indicator_code", "state_code",
-        "nic_code", "limit", "nic_type", "Format"
-    ],
-    "NAS": [
-        "series", "frequency_code", "year", "indicator_code", "quarterly_code",
-        "approach_code", "revision_code", "institutional_code", "industry_code",
-        "subindustry_code", "limit", "page", "Format"
-    ],
-    "WPI": [
-        "year", "month_code", "major_group_code", "group_code", "sub_group_code",
-        "sub_sub_group_code", "item_code", "limit", "Format"
-    ],
-    "ENERGY": [
-        "indicator_code", "use_of_energy_balance_code", "year", "energy_commodities_code",
-        "energy_sub_commodities_code", "end_use_sector_code", "end_use_sub_sector_code",
-        "limit", "page", "Format"
-    ],
-    # v2: Uncomment below datasets for full release
-    # "HCES": [
-    #     "indicator_code", "year", "sub_indicator_code", "state_code", "sector_code",
-    #     "imputation_type_code", "mpce_fractile_classes_code", "item_category_code",
-    #     "cereal_code", "employment_of_households_code", "social_group_code", "page", "Format"
-    # ],
-    # "NSS78": [
-    #     "indicator_code", "state_code", "sector_code", "gender_code", "agegroup_code",
-    #     "internetaccess_code", "household_leavingreason_code", "subindicator_code",
-    #     "households_code", "sourceoffinance_code", "page", "limit", "Format"
-    # ],
-    # "NSS77": [
-    #     "indicator_code", "state_code", "visit_code", "land_possessed_household_code",
-    #     "agricultural_household_code", "caste_code", "season_code", "sub_indicator_code",
-    #     "social_group_code", "size_class_code", "page", "limit", "Format"
-    # ],
-    # "TUS": [
-    #     "indicator_code", "year", "state_code", "sector_code", "gender_code",
-    #     "age_group_code", "icatus_activity_code", "day_of_week_code", "page", "limit", "Format"
-    # ],
-    # "NFHS": [
-    #     "indicator_code", "state_code", "sub_indicator_code", "sector_code",
-    #     "survey_code", "page", "limit", "Format"
-    # ],
-    # "ASUSE": [
-    #     "indicator_code", "frequency_code", "year", "state_code", "sector_code",
-    #     "activity_code", "establishment_type_code", "broad_activity_category_code",
-    #     "sub_indicator_code", "owner_education_level_code", "location_establishment_code",
-    #     "operation_duration_code", "page", "limit", "Format"
-    # ],
-    # "GENDER": [
-    #     "indicator_code", "year", "sector_code", "gender_code", "state_ut_code",
-    #     "age_group_code", "sub_indicator_code", "crime_head_code", "page", "limit", "Format"
-    # ],
-    # "RBI": [
-    #     "indicator_code", "year", "month_code", "quarter_code", "country_group_code",
-    #     "country_code", "trade_type_code", "currency_code", "reserve_type_code",
-    #     "reserve_currency_code", "sub_indicator_code", "page", "limit", "Format"
-    # ],
-    # "ENVSTATS": [
-    #     "indicator_code", "year", "state_code", "sub_indicator_code", "season_code",
-    #     "month_code", "city_code", "parameter_code", "forest_type_code", "phylum_code",
-    #     "disaster_type_code", "river_length_code", "sub_basin_code", "page", "limit", "Format"
-    # ],
-    # "AISHE": [
-    #     "indicator_code", "year", "state_code", "sub_indicator_code", "university_type_code",
-    #     "college_type_code", "social_group_code", "gender_code", "level_code",
-    #     "page", "limit", "Format"
-    # ],
-    # "CPIALRL": [
-    #     "indicator_code", "base_year", "year", "month_code", "state_code",
-    #     "group_code", "page", "limit", "Format"
-    # ],
-}
-
-# Aliases for common parameter name variations
-# Maps (dataset, input_key) -> correct_api_key
-PARAM_ALIASES = {
+# Maps dataset key -> (swagger_yaml_file, endpoint_path)
+# Swagger YAMLs are the single source of truth for valid API parameters.
+DATASET_SWAGGER = {
+    "PLFS": ("swagger_user_plfs.yaml", "/api/plfs/getData"),
+    "CPI": ("swagger_user_cpi.yaml", "/api/cpi/getCPIIndex"),
+    "CPI_GROUP": ("swagger_user_cpi.yaml", "/api/cpi/getCPIIndex"),
+    "CPI_ITEM": ("swagger_user_cpi.yaml", "/api/cpi/getItemIndex"),
+    "IIP": ("swagger_user_iip.yaml", "/api/iip/getIIPAnnual"),
+    "IIP_ANNUAL": ("swagger_user_iip.yaml", "/api/iip/getIIPAnnual"),
+    "IIP_MONTHLY": ("swagger_user_iip.yaml", "/api/iip/getIIPMonthly"),
+    "ASI": ("swagger_user_asi.yaml", "/api/asi/getASIData"),
+    "NAS": ("swagger_user_nas.yaml", "/api/nas/getNASData"),
+    "WPI": ("swagger_user_wpi.yaml", "/api/wpi/getWpiRecords"),
+    "ENERGY": ("swagger_user_energy.yaml", "/api/energy/getEnergyRecords"),
     # v2: Uncomment for full release
-    # "GENDER": {
-    #     "state": "state_ut_code",
-    #     "state_code": "state_ut_code",
-    #     "state_ut": "state_ut_code",
-    # },
-    # "NSS78": {
-    #     "sub_indicator": "subindicator_code",
-    #     "sub_indicator_code": "subindicator_code",
-    #     "agegroup": "agegroup_code",
-    #     "age_group": "agegroup_code",
-    #     "age_group_code": "agegroup_code",
-    # },
-    # "RBI": {
-    #     "indicator_code": "sub_indicator_code",  # RBI uses sub_indicator_code as main
-    # },
+    # "HCES": ("swagger_user_hces.yaml", "/api/hces/getHcesRecords"),
+    # "NSS78": ("swagger_user_nss78.yaml", "/api/nss-78/getNss78Records"),
+    # "NSS77": ("swagger_user_nss77.yaml", "/api/nss-77/getNss77Records"),
+    # "TUS": ("swagger_user_tus.yaml", "/api/tus/getTusRecords"),
+    # "NFHS": ("swagger_user_nfhs.yaml", "/api/nfhs/getNfhsRecords"),
+    # "ASUSE": ("swagger_user_asuse.yaml", "/api/asuse/getAsuseRecords"),
+    # "GENDER": ("swagger_user_gender.yaml", "/api/gender/getGenderRecords"),
+    # "RBI": ("swagger_user_rbi.yaml", "/api/rbi/getRbiRecords"),
+    # "ENVSTATS": ("swagger_user_envstats.yaml", "/api/env/getEnvStatsRecords"),
+    # "AISHE": ("swagger_user_aishe.yaml", "/api/aishe/getAisheRecords"),
+    # "CPIALRL": ("swagger_user_cpialrl.yaml", "/api/cpialrl/getCpialrlRecords"),
 }
 
 # Datasets that require indicator_code in get_data
@@ -150,84 +59,54 @@ DATASETS_REQUIRING_INDICATOR = [
     # v2: "NSS78", "NSS77", "HCES", "TUS", "NFHS", "ASUSE", "GENDER", "ENVSTATS", "AISHE", "CPIALRL"
 ]
 
-# RBI uses sub_indicator_code instead of indicator_code
-# v2: DATASETS_REQUIRING_SUB_INDICATOR = ["RBI"]
-DATASETS_REQUIRING_SUB_INDICATOR = []
+# v2: RBI uses sub_indicator_code instead of indicator_code
+# DATASETS_REQUIRING_SUB_INDICATOR = ["RBI"]
 
-# These don't use indicator_code
-DATASETS_NO_INDICATOR = ["CPI", "IIP", "WPI", "ASI"]
+
+def get_swagger_param_definitions(dataset: str) -> list:
+    """Load full param definitions from swagger spec for a dataset."""
+    dataset_upper = dataset.upper()
+    if dataset_upper not in DATASET_SWAGGER:
+        return []
+    yaml_file, endpoint_path = DATASET_SWAGGER[dataset_upper]
+    swagger_path = os.path.join(SWAGGER_DIR, yaml_file)
+    if not os.path.exists(swagger_path):
+        return []
+    with open(swagger_path, 'r') as f:
+        spec = yaml.safe_load(f)
+    return spec.get("paths", {}).get(endpoint_path, {}).get("get", {}).get("parameters", [])
 
 
 def get_swagger_params(dataset: str) -> list:
-    """Load param names from swagger spec if available."""
-    swagger_path = os.path.join(SWAGGER_DIR, f"swagger_user_{dataset.lower()}.yaml")
-    if os.path.exists(swagger_path):
-        with open(swagger_path, 'r') as f:
-            spec = yaml.safe_load(f)
-        params = spec.get("paths", {})
-        if params:
-            endpoint = list(params.keys())[0]
-            raw_params = params[endpoint].get("get", {}).get("parameters", [])
-            return [p["name"] for p in raw_params]
-    return []
+    """Get list of valid param names for a dataset from swagger."""
+    return [p["name"] for p in get_swagger_param_definitions(dataset)]
 
 
-def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
+def validate_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     """
-    Transform filter keys from metadata format to API format.
-
-    Handles:
-    1. Dataset-specific aliases (e.g., 'state' -> 'state_ut_code' for GENDER)
-    2. Adding '_code' suffix if missing (e.g., 'sector' -> 'sector_code')
-    3. Matching to valid params for the dataset
+    Validate filters against swagger spec for a dataset.
+    Returns dict with 'valid' (bool) and 'invalid_params' (list) if any.
     """
-    dataset_upper = dataset.upper()
-
-    # Try swagger first, fall back to DATASET_PARAMS
-    valid_params = get_swagger_params(dataset_upper) or DATASET_PARAMS.get(dataset_upper, [])
-    aliases = PARAM_ALIASES.get(dataset_upper, {})
-
+    valid_params = get_swagger_params(dataset)
     if not valid_params:
-        return filters  # Unknown dataset, pass through
+        return {"valid": True}  # Can't validate, pass through
 
-    transformed = {}
-    for key, value in filters.items():
-        # Skip None values
-        if value is None:
-            continue
+    invalid = [k for k in filters.keys() if k not in valid_params]
+    if invalid:
+        return {
+            "valid": False,
+            "invalid_params": invalid,
+            "valid_params": valid_params,
+            "hint": f"Invalid params: {invalid}. Check api_params from get_metadata for valid options."
+        }
+    return {"valid": True}
 
-        # Check aliases first (dataset-specific mappings)
-        if key in aliases:
-            transformed[aliases[key]] = str(value)
-            continue
 
-        # Try exact match
-        if key in valid_params:
-            transformed[key] = str(value)
-            continue
-
-        # Try adding _code suffix
-        key_with_code = f"{key}_code"
-        if key_with_code in valid_params:
-            transformed[key_with_code] = str(value)
-            continue
-
-        # Check if key_with_code has an alias
-        if key_with_code in aliases:
-            transformed[aliases[key_with_code]] = str(value)
-            continue
-
-        # Try removing _code suffix (in case user double-added)
-        if key.endswith('_code'):
-            key_without_code = key[:-5]
-            if key_without_code in valid_params:
-                transformed[key_without_code] = str(value)
-                continue
-
-        # No match found - pass through anyway (API will handle the error)
-        transformed[key] = str(value)
-
-    return transformed
+def transform_filters(filters: Dict[str, str]) -> Dict[str, str]:
+    """
+    Transform filters: skip None values and convert all values to strings.
+    """
+    return {k: str(v) for k, v in filters.items() if v is not None}
 
 
 # v2: Additional datasets - HCES, NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
@@ -308,17 +187,14 @@ def get_metadata(
     - Only ask for missing filters if genuinely needed
     - If user asked for a breakdown that's not available, tell them what IS available
 
-    Args:
-        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)
-        indicator_code: Required for PLFS, NAS, ENERGY
-        base_year: Required for CPI ("2012"/"2010") and IIP ("2011-12"/"2004-05"/"1993-94")
-        level: Required for CPI ("Group"/"Item")
-        frequency: Required for IIP ("Annually"/"Monthly")
-        classification_year: Required for ASI ("2008"/"2004"/"1998"/"1987")
-        frequency_code: Optional for PLFS, NAS (1=Annually, 2=Quarterly)
-        series: Optional for NAS ("Current"/"Back")
-        use_of_energy_balance_code: Optional for ENERGY (1=Supply, 2=Consumption)
-        sub_indicator_code: Optional (v2)
+    Dataset-specific params:
+    - PLFS: indicator_code, frequency_code (1=Annual, 2=Quarterly, 3=Monthly - MUST match user query!)
+    - CPI: base_year ("2012"/"2010"), level ("Group"/"Item")
+    - IIP: base_year ("2011-12"/"2004-05"/"1993-94"), frequency ("Annually"/"Monthly")
+    - ASI: classification_year ("2008"/"2004"/"1998"/"1987")
+    - NAS: indicator_code, series ("Current"/"Back"), frequency_code (1=Annual, 2=Quarterly)
+    - WPI: no params needed
+    - ENERGY: indicator_code (1=KToE, 2=PetaJoules), use_of_energy_balance_code (1=Supply, 2=Consumption)
     """
     dataset = dataset.upper()
 
@@ -333,48 +209,44 @@ def get_metadata(
 
     try:
         if dataset == "CPI":
+            swagger_key = "CPI_ITEM" if (level or "Group") == "Item" else "CPI_GROUP"
             result = mospi.get_cpi_filters(base_year=base_year or "2012", level=level or "Group")
-            result["_include_in_get_data"] = {"base_year": base_year or "2012"}
+            result["api_params"] = get_swagger_param_definitions(swagger_key)
             return result
 
         elif dataset == "IIP":
+            swagger_key = "IIP_MONTHLY" if (frequency or "Annually") == "Monthly" else "IIP_ANNUAL"
             result = mospi.get_iip_filters(base_year=base_year or "2011-12", frequency=frequency or "Annually")
-            result["_include_in_get_data"] = {"base_year": base_year or "2011-12"}
+            result["api_params"] = get_swagger_param_definitions(swagger_key)
             return result
 
         elif dataset == "ASI":
             result = mospi.get_asi_filters(classification_year=classification_year or "2008")
-            result["_include_in_get_data"] = {"classification_year": classification_year or "2008"}
+            result["api_params"] = get_swagger_param_definitions("ASI")
             return result
 
         elif dataset == "WPI":
-            return mospi.get_wpi_filters()
+            result = mospi.get_wpi_filters()
+            result["api_params"] = get_swagger_param_definitions("WPI")
+            return result
 
         elif dataset == "PLFS":
             if indicator_code is None:
                 return {"error": "indicator_code is required for PLFS"}
 
-            # Get actual filter values from API
             filters = mospi.get_plfs_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
-
-            # Load swagger for param definitions
-            swagger_path = os.path.join(SWAGGER_DIR, "swagger_user_plfs.yaml")
-            with open(swagger_path, 'r') as f:
-                spec = yaml.safe_load(f)
-            swagger_params = spec["paths"]["/api/plfs/getData"]["get"]["parameters"]
 
             return {
                 "dataset": "PLFS",
                 "filter_values": filters,
-                "api_params": swagger_params,
-                "_include_in_get_data": {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1)}
+                "api_params": get_swagger_param_definitions("PLFS"),
             }
 
         elif dataset == "NAS":
             if indicator_code is None:
                 return {"error": "indicator_code is required for NAS"}
             result = mospi.get_nas_filters(series=series or "Current", frequency_code=frequency_code or 1, indicator_code=indicator_code)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1), "series": series or "Current"}
+            result["api_params"] = get_swagger_param_definitions("NAS")
             return result
 
         # v2: Uncomment for full release
@@ -402,7 +274,7 @@ def get_metadata(
             ind_code = indicator_code or 1
             energy_code = use_of_energy_balance_code or 1
             result = mospi.get_energy_filters(indicator_code=ind_code, use_of_energy_balance_code=energy_code)
-            result["_include_in_get_data"] = {"indicator_code": str(ind_code), "use_of_energy_balance_code": str(energy_code)}
+            result["api_params"] = get_swagger_param_definitions("ENERGY")
             return result
 
         # v2: Uncomment for full release
@@ -476,30 +348,29 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     Step 3: Fetch data from a MoSPI dataset.
 
     ⚠️ CRITICAL: Call get_metadata() first to get valid filter keys and values.
-
-    ⚠️ IMPORTANT: Always include values from _include_in_get_data field in your filters!
-    Most datasets require indicator_code - copy it from get_metadata response.
+    Check api_params from get_metadata response to see required params and valid values.
 
     Filter format:
     - Use 'id' values from metadata (e.g., "103" not "Dams")
-    - MUST include indicator_code for most datasets (check _include_in_get_data)
+    - Include all required params (marked required in api_params)
+    - API returns only 10 records by default. Pass limit (e.g., "50", "100") if you expect more records.
 
     Args:
         dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)
         filters: Key-value pairs from get_metadata(). Use 'id' values as strings.
-                 Include indicator_code from _include_in_get_data field!
+                 Include limit (e.g., "100") when you expect more than 10 records.
     """
     dataset = dataset.upper()
 
     # Auto-route CPI and IIP based on filters provided
     if dataset == "CPI":
-        if "item_code" in filters or "item" in filters:
+        if "item_code" in filters:
             dataset = "CPI_ITEM"
         else:
             dataset = "CPI_GROUP"
 
     if dataset == "IIP":
-        if "month_code" in filters or "month" in filters:
+        if "month_code" in filters:
             dataset = "IIP_MONTHLY"
         else:
             dataset = "IIP_ANNUAL"
@@ -538,18 +409,24 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
         if "indicator_code" not in filters:
             return {
                 "error": f"indicator_code is required for {dataset}",
-                "hint": "Include the indicator_code from get_metadata's _include_in_get_data field"
+                "hint": "Include the indicator_code you used in get_metadata"
             }
 
-    if dataset in DATASETS_REQUIRING_SUB_INDICATOR:
-        if "sub_indicator_code" not in filters and "indicator_code" not in filters:
-            return {
-                "error": f"sub_indicator_code is required for {dataset}",
-                "hint": "Include the sub_indicator_code from get_metadata's _include_in_get_data field"
-            }
+    # v2: Uncomment for RBI support
+    # if dataset in DATASETS_REQUIRING_SUB_INDICATOR:
+    #     if "sub_indicator_code" not in filters and "indicator_code" not in filters:
+    #         return {
+    #             "error": f"sub_indicator_code is required for {dataset}",
+    #             "hint": "Include the sub_indicator_code you used in get_metadata"
+    #         }
 
-    # Transform filter keys to match API expectations
-    transformed_filters = transform_filters(dataset, filters)
+    # Transform filters: skip None values and convert to strings
+    transformed_filters = transform_filters(filters)
+
+    # Validate params against swagger spec
+    validation = validate_filters(dataset, transformed_filters)
+    if not validation["valid"]:
+        return {"error": "Invalid parameters", **validation}
 
     return mospi.get_data(api_dataset, transformed_filters)
 
