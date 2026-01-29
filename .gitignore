@@ -68,3 +68,9 @@ handover_final.md
 
 # Code analysis
 CODEBASE_ANALYSIS.md
+
+# Swagger docs
+swagger/
+
+# Context
+context.md

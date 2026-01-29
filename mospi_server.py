@@ -1,8 +1,12 @@
 import sys
+import os
+import yaml
 from typing import Dict, Any, Optional
 from fastmcp import FastMCP
 from mospi.client import mospi
 from telemetry import TelemetryMiddleware
+
+SWAGGER_DIR = os.path.join(os.path.dirname(__file__), "swagger")
 
 
 def log(msg: str):
@@ -16,10 +20,6 @@ mcp = FastMCP("MoSPI Data Server")
 mcp.add_middleware(TelemetryMiddleware())
 
 
-# =============================================================================
-# Generic Tools
-# =============================================================================
-
 VALID_DATASETS = [
     "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY",
     # v2: "HCES", "NSS78", "NSS77", "TUS", "NFHS", "ASUSE", "GENDER", "RBI", "ENVSTATS", "AISHE", "CPIALRL"
@@ -28,14 +28,7 @@ VALID_DATASETS = [
 # Valid API parameters for each dataset (extracted from deprecated dataset files)
 # These are the EXACT param names the API expects
 DATASET_PARAMS = {
-    "PLFS": [
-        "indicator_code", "frequency_code", "year", "page", "limit", "Format",
-        "state_code", "sector_code", "gender_code", "age_code", "weekly_status_code",
-        "religion_code", "social_category_code", "education_code", "broad_industry_work_code",
-        "broad_status_employment_code", "employee_contract_code", "enterprise_size_code",
-        "enterprise_type_code", "industry_section_code", "nco_division_code", "nic_group_code",
-        "quarter_code", "month_code"
-    ],
+    # PLFS: uses swagger/swagger_user_plfs.yaml
     "CPI": [
         "base_year", "series", "year", "month_code", "state_code", "group_code",
         "subgroup_code", "sector_code", "item_code", "limit", "Format"
@@ -165,6 +158,20 @@ DATASETS_REQUIRING_SUB_INDICATOR = []
 DATASETS_NO_INDICATOR = ["CPI", "IIP", "WPI", "ASI"]
 
 
+def get_swagger_params(dataset: str) -> list:
+    """Load param names from swagger spec if available."""
+    swagger_path = os.path.join(SWAGGER_DIR, f"swagger_user_{dataset.lower()}.yaml")
+    if os.path.exists(swagger_path):
+        with open(swagger_path, 'r') as f:
+            spec = yaml.safe_load(f)
+        params = spec.get("paths", {})
+        if params:
+            endpoint = list(params.keys())[0]
+            raw_params = params[endpoint].get("get", {}).get("parameters", [])
+            return [p["name"] for p in raw_params]
+    return []
+
+
 def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
     """
     Transform filter keys from metadata format to API format.
@@ -175,7 +182,9 @@ def transform_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, str]:
     3. Matching to valid params for the dataset
     """
     dataset_upper = dataset.upper()
-    valid_params = DATASET_PARAMS.get(dataset_upper, [])
+
+    # Try swagger first, fall back to DATASET_PARAMS
+    valid_params = get_swagger_params(dataset_upper) or DATASET_PARAMS.get(dataset_upper, [])
     aliases = PARAM_ALIASES.get(dataset_upper, {})
 
     if not valid_params:
@@ -344,9 +353,22 @@ def get_metadata(
         elif dataset == "PLFS":
             if indicator_code is None:
                 return {"error": "indicator_code is required for PLFS"}
-            result = mospi.get_plfs_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
-            result["_include_in_get_data"] = {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1)}
-            return result
+
+            # Get actual filter values from API
+            filters = mospi.get_plfs_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+
+            # Load swagger for param definitions
+            swagger_path = os.path.join(SWAGGER_DIR, "swagger_user_plfs.yaml")
+            with open(swagger_path, 'r') as f:
+                spec = yaml.safe_load(f)
+            swagger_params = spec["paths"]["/api/plfs/getData"]["get"]["parameters"]
+
+            return {
+                "dataset": "PLFS",
+                "filter_values": filters,
+                "api_params": swagger_params,
+                "_include_in_get_data": {"indicator_code": str(indicator_code), "frequency_code": str(frequency_code or 1)}
+            }
 
         elif dataset == "NAS":
             if indicator_code is None:
