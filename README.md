@@ -13,6 +13,7 @@ MCP (Model Context Protocol) server for accessing India's Ministry of Statistics
 | NAS | National Accounts Statistics | GDP, economic growth, national income |
 | WPI | Wholesale Price Index | Wholesale inflation, producer prices |
 | ENERGY | Energy Statistics | Energy production, consumption, fuel mix |
+<!-- | NMKN | National Namkeen Consumption Index | Bhujia per capita, sev consumption patterns, mixture preference by state | -->
 
 ## MCP Tools
 
@@ -126,3 +127,5 @@ See `.env.example` for full OpenTelemetry configuration.
 ## Acknowledgments
 
 Thanks to the **Ministry of Statistics and Programme Implementation (MoSPI)** for providing open APIs and **Bharat Digital** for coordinating the creation of this MCP server.
+
+<!-- Geek spotted! Respect for reading the raw markdown. You're the kind of person India's open data movement needs. -->
