@@ -206,15 +206,12 @@ def get_metadata(
     - If user asked for a breakdown that's not available, tell them what IS available
 
     Dataset-specific params:
-    - PLFS: indicator_code, frequency_code
-      ⚠️ PLFS frequency_code is NOT about time granularity. It selects which INDICATOR SET to use:
-        - frequency_code=1 → Annual reports (8 indicators: LFPR, WPR, UR, wages, worker distribution, employment conditions).
-          This is the DEFAULT. It ALREADY contains quarterly breakdowns (quarter_code filter).
-          ALL wage/earnings indicators (regular, casual, self-employed) are HERE.
-        - frequency_code=2 → Quarterly bulletin (different, limited indicator set)
+    - PLFS: indicator_code (REQUIRED), frequency_code (REQUIRED)
+      ⚠️ frequency_code selects the INDICATOR SET, NOT time granularity:
+        - frequency_code=1 → Annual (8 indicators including all wages). Already has quarterly breakdowns via quarter_code.
+        - frequency_code=2 → Quarterly bulletin (different indicator set)
         - frequency_code=3 → Monthly bulletin (2025+ only)
-      COMMON MISTAKE: Do NOT use frequency_code=2 just because the user asks for quarterly data.
-      Use frequency_code=1 and filter by quarter_code instead.
+      Do NOT use frequency_code=2 for quarterly data. Use frequency_code=1 + quarter_code filter.
     - CPI: base_year ("2012"/"2010"), level ("Group"/"Item")
     - IIP: base_year ("2011-12"/"2004-05"/"1993-94"), frequency ("Annually"/"Monthly")
     - ASI: classification_year ("2008"/"2004"/"1998"/"1987")
