@@ -363,14 +363,21 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     """
     Step 3: Fetch data from a MoSPI dataset.
 
-    ⚠️ CRITICAL: You MUST call get_metadata() before calling this function.
-    DO NOT guess or infer filter values — they will be wrong. Filter codes are
-    non-obvious (e.g., Gujarat is state_code=8 not 24, APR-JUN is quarter_code=5 not 1,
-    frequency_code must be 1/2/3 not "Q"/"A"/"M"). The ONLY way to get correct values
-    is from get_metadata().
+    ⚠️⚠️⚠️ MANDATORY: ONLY call this AFTER calling get_metadata(). NEVER call get_data() directly.
+    You MUST use the filter values returned by get_metadata() — DO NOT guess, infer, or assume
+    any filter codes. They are NON-OBVIOUS and you WILL get them wrong.
+
+    Examples of WRONG guesses that return empty/incorrect data:
+    - Gujarat is state_code=8, NOT 24 (24 is Sikkim)
+    - APR-JUN is quarter_code=5, NOT 1
+    - frequency_code must be 1/2/3, NOT "Q"/"A"/"M"
+    - All India is state_code=99, but other states have arbitrary codes
+
+    The ONLY reliable source for filter codes is the get_metadata() response.
+    Calling get_data() without first calling get_metadata() WILL produce wrong results.
 
     Filter format:
-    - Use 'id' values from metadata (e.g., state_code="8" not "Gujarat")
+    - Use 'id' values from get_metadata() (e.g., state_code="8" not "Gujarat")
     - Include all required params (marked required in api_params)
     - API returns only 10 records by default. Pass limit (e.g., "50", "100") if you expect more records.
 
