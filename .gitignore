@@ -69,8 +69,7 @@ handover_final.md
 # Code analysis
 CODEBASE_ANALYSIS.md
 
-# Swagger docs & test scripts
-swagger/
+# Swagger test scripts
 fetch_swagger.py
 test_swagger.py
 .swagger_test_cache.json

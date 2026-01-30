@@ -1,0 +1,109 @@
+openapi: 3.0.1
+info:
+  title: Environment Statistics
+  version: 1.0.0
+servers:
+- url: https://api.mospi.gov.in/
+tags:
+- name: Environment Statistics.
+  description: Indicator-wise environment statistics in India.
+paths:
+  /api/env/getEnvStatsRecords:
+    get:
+      summary: Get  data for an indicator
+      description: |
+        - **Required:** `indicator_code`  
+        - **Filters (optional):** year, month_code, quarter_code, state_code, region_code, sector_code,
+          sub_indicator_code, livestock_marine_products_code, wetland_type_area_code,wetland_type_area_code,
+          river_code,soil_code,land_degradation_code,land_use_category_code,land_cover_code,phylum_code,      
+          risk_status_code,risk_category_code,carbon_pool_code,cities_code,emission_source_code,area_code,area_type_code,
+          monitoring_station_code,minerals_metal_code,fuel_mineral_sub_cate_code,basin_code,commodity_code,cultivated_area_code,
+          fertilizer_code,foodgrain_code,fuel_type_code,hazardous_waste_code,lenght_of_road_code,major_discipline_code,
+          metalic_mineral_sub_cate_code,minerals_category_code,movement_by_road_transport_code,nfhs_round_code,
+          nonmetalic_minerl_sub_cate_code,ore_code,ozone_depleting_substance_code,pesticides_insecticides_code,revenue_realised_code,
+          river_length_code,scheme_code,slums_code,source_drinking_water_code,source_irrigation_code,source_power_generation_code,
+          species_code,sub_basin_code,subsidy_scheme_code,type_of_coal_code,vehicles_registered_code,site_code,causes_code,broad_discipline_code,
+          zone_code,land_use_sub_category_code,limit,page,format.
+
+      parameters:
+        - in: query
+          name: indicator_code
+          required: true
+          schema: { type: integer }
+          description: Indicator code (primary filter)
+        - in: query
+          name: year
+          schema: { type: string }
+        - in: query
+          name: month_code
+          schema: { type: integer }
+        - in: query
+          name: quarter_code
+          schema: { type: integer }
+        - in: query
+          name: state_code
+          schema: { type: integer }
+        - in: query
+          name: region_code
+          schema: { type: integer }
+        - in: query
+          name: sector_code
+          schema: { type: integer }
+        - in: query
+          name: sub_indicator_code
+          schema: { type: integer }
+        - in: query
+          name: livestock_marine_products_code
+          schema: { type: integer }
+        - in: query
+          name: wetland_type_area_code
+          schema: { type: integer }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20 }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1 }
+        - in: query
+          name: format
+          schema:
+            type: string
+          description: Set to `xlsx` to download as excel
+
+      responses:
+        "200":
+          description: A JSON array of user information
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid request body
+            text/csv:
+              schema:
+                type: object
+                properties:
+                  statusCode:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: Invalid request body
+      security:
+      - bearerAuth: []
+ 
+components:
+  securitySchemes:
+    bearerAuth:
+      type: apiKey
+      description: Bearer token to access these api endpoints
+      name: Authorization
+      in: header
+x-original-swagger-version: "2.0"
