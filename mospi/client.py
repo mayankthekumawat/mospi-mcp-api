@@ -69,14 +69,24 @@ class MoSPI:
     # =========================================================================
 
     def get_plfs_indicators(self) -> Dict[str, Any]:
-        """Fetch list of all PLFS indicators from MoSPI API."""
+        """Fetch PLFS indicators grouped by frequency_code."""
+        url = f"{self.base_url}/api/plfs/getIndicatorListByFrequency"
+        result = {}
         try:
-            response = requests.get(
-                f"{self.base_url}/api/plfs/getIndicatorListByFrequency",
-                timeout=30
-            )
-            response.raise_for_status()
-            return response.json()
+            for fc, label in [(1, "Annual"), (2, "Quarterly"), (3, "Monthly")]:
+                response = requests.get(url, params={"frequency_code": fc}, timeout=30)
+                response.raise_for_status()
+                data = response.json()
+                result[f"frequency_code_{fc}_{label}"] = data.get("data", [])
+            return {
+                "indicators_by_frequency": result,
+                "_note": "frequency_code=1 (Annual) has 8 indicators including all wages. "
+                         "It already contains quarterly breakdowns — use quarter_code to filter. "
+                         "frequency_code=2 (Quarterly) has 4 indicators for quarterly bulletin tables. "
+                         "frequency_code=3 (Monthly) has 3 indicators (2025+ data only). "
+                         "Pick the frequency_code whose indicator set matches the query.",
+                "statusCode": True,
+            }
         except requests.RequestException as e:
             return {"error": str(e), "statusCode": False}
 
@@ -207,6 +217,45 @@ class MoSPI:
             )
             response.raise_for_status()
             return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_asi_indicators(self) -> Dict[str, Any]:
+        """Fetch ASI indicator list from the filter endpoint (using classification_year=2008).
+
+        Returns indicators plus classification year info so the LLM knows
+        it must pass classification_year in get_metadata/get_data.
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/asi/getAsiFilter",
+                params={"classification_year": "2008"},
+                timeout=30
+            )
+            response.raise_for_status()
+            data = response.json()
+            filter_data = data.get("data", data)
+            # Extract indicator list if present
+            indicators = None
+            if isinstance(filter_data, dict):
+                indicators = filter_data.get("indicator", filter_data.get("indicators", None))
+            result = {
+                "dataset": "ASI",
+                "classification_years": ["2008", "2004", "1998", "1987"],
+                "_note": "classification_year is REQUIRED for ASI. It is the NIC classification version, NOT the data year. "
+                         "Pick based on which data year you need: "
+                         "'1987' → 1992-93 to 1997-98 | "
+                         "'1998' → 1998-99 to 2003-04 | "
+                         "'2004' → 2004-05 to 2007-08 | "
+                         "'2008' → 2008-09 to 2023-24. "
+                         "Pass classification_year in 3_get_metadata() and 4_get_data().",
+                "statusCode": True,
+            }
+            if indicators:
+                result["indicators"] = indicators
+            else:
+                result["filters"] = filter_data
+            return result
         except requests.RequestException as e:
             return {"error": str(e), "statusCode": False}
 
