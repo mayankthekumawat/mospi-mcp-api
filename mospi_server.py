@@ -140,6 +140,8 @@ def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, 
     - If query is specific, pick the matching indicator and proceed to get_metadata
     - Only ask user to choose if multiple indicators could match their query
     - Do NOT ask for confirmation if the right indicator is obvious
+    - For PLFS: use frequency_code=1 (Annual) by default — it covers ALL 8 indicators including wages
+      and ALREADY has quarterly breakdowns. Do NOT pick frequency_code=2 for quarterly data.
 
     Args:
         dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY
