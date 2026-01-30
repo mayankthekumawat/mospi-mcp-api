@@ -4,6 +4,7 @@ fastmcp==3.0.0b1
 
 # Core dependencies
 requests>=2.31.0
+PyYAML>=6.0
 
 # OpenTelemetry instrumentation
 opentelemetry-api>=1.27.0
