@@ -129,7 +129,7 @@ def transform_filters(filters: Dict[str, str]) -> Dict[str, str]:
 @mcp.tool()
 def get_indicators(dataset: str, user_query: Optional[str] = None) -> Dict[str, Any]:
     """
-    Step 1: Get available indicators for a dataset.
+    Step 2: Get available indicators for a dataset.
 
     ⚠️ ALWAYS call this before saying data doesn't exist. Datasets contain more than their names suggest.
 
@@ -194,7 +194,7 @@ def get_metadata(
     sub_indicator_code: Optional[int] = None
 ) -> Dict[str, Any]:
     """
-    Step 2: Get available filter options for a dataset/indicator.
+    Step 3: Get available filter options for a dataset/indicator.
 
     Returns all valid filter values (states, years, categories, etc.) to use in get_data().
 
@@ -361,7 +361,7 @@ def get_metadata(
 @mcp.tool()
 def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     """
-    Step 3: Fetch data from a MoSPI dataset.
+    Step 4: Fetch data from a MoSPI dataset.
 
     ⚠️⚠️⚠️ MANDATORY: ONLY call this AFTER calling get_metadata(). NEVER call get_data() directly.
     You MUST use the filter values returned by get_metadata() — DO NOT guess, infer, or assume
@@ -531,7 +531,7 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
 @mcp.tool()
 def know_about_mospi_api() -> Dict[str, Any]:
     """
-    Step 0 : Get overview of all 7 datasets to find the right one for your query.
+    Step 1: Get overview of all 7 datasets to find the right one for your query.
 
     Use this if unsure which dataset contains the data you need. Skip if you already know the dataset.
     Available datasets: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY
@@ -546,10 +546,10 @@ def know_about_mospi_api() -> Dict[str, Any]:
     - Do NOT ask "Shall I proceed?" if the query is already specific enough
 
     Workflow:
-    0. know_about_mospi_api() - find which dataset to use (optional)
-    1. get_indicators(dataset) - list available indicators
-    2. get_metadata(dataset, indicator_code) - get filter options
-    3. get_data(dataset, filters) - fetch data
+    1. know_about_mospi_api() - find which dataset to use (optional)
+    2. get_indicators(dataset) - list available indicators
+    3. get_metadata(dataset, indicator_code) - get filter options (MANDATORY before step 4)
+    4. get_data(dataset, filters) - fetch data (ONLY after step 3)
 
     Returns:
         Dataset descriptions with use_for hints, and critical rules
@@ -650,9 +650,10 @@ def know_about_mospi_api() -> Dict[str, Any]:
             # }
         },
         "workflow": [
-            "1. get_indicators(dataset) → list available indicators (ALWAYS do this first)",
-            "2. get_metadata(dataset, indicator_code) → get ALL filter options (states, years, etc.)",
-            "3. get_data(dataset, filters) → fetch data with filters dict from step 2"
+            "1. know_about_mospi_api() → find which dataset to use (optional, skip if you already know)",
+            "2. get_indicators(dataset) → list available indicators (ALWAYS do this first)",
+            "3. get_metadata(dataset, indicator_code) → get ALL filter options (states, years, etc.) — MANDATORY",
+            "4. get_data(dataset, filters) → fetch data — ONLY use filter values from step 3, NEVER guess"
         ],
         "critical_rules": [
             "⚠️ CRITICAL: NEVER assume data doesn't exist based on dataset names or your prior knowledge",
