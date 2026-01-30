@@ -85,12 +85,15 @@ def get_swagger_params(dataset: str) -> list:
 def validate_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     """
     Validate filters against swagger spec for a dataset.
-    Returns dict with 'valid' (bool) and 'invalid_params' (list) if any.
+    Checks for unknown params and missing required params.
     """
-    valid_params = get_swagger_params(dataset)
-    if not valid_params:
+    param_defs = get_swagger_param_definitions(dataset)
+    if not param_defs:
         return {"valid": True}  # Can't validate, pass through
 
+    valid_params = [p["name"] for p in param_defs]
+
+    # Check for unknown params
     invalid = [k for k in filters.keys() if k not in valid_params]
     if invalid:
         return {
@@ -99,6 +102,19 @@ def validate_filters(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
             "valid_params": valid_params,
             "hint": f"Invalid params: {invalid}. Check api_params from get_metadata for valid options."
         }
+
+    # Check for missing required params (exclude Format — auto-handled by client)
+    missing = [
+        p["name"] for p in param_defs
+        if p.get("required") and p["name"] != "Format" and p["name"] not in filters
+    ]
+    if missing:
+        return {
+            "valid": False,
+            "missing_required": missing,
+            "hint": f"Missing required params: {missing}. Call get_metadata() to get valid values."
+        }
+
     return {"valid": True}
 
 
@@ -347,11 +363,14 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     """
     Step 3: Fetch data from a MoSPI dataset.
 
-    ⚠️ CRITICAL: Call get_metadata() first to get valid filter keys and values.
-    Check api_params from get_metadata response to see required params and valid values.
+    ⚠️ CRITICAL: You MUST call get_metadata() before calling this function.
+    DO NOT guess or infer filter values — they will be wrong. Filter codes are
+    non-obvious (e.g., Gujarat is state_code=8 not 24, APR-JUN is quarter_code=5 not 1,
+    frequency_code must be 1/2/3 not "Q"/"A"/"M"). The ONLY way to get correct values
+    is from get_metadata().
 
     Filter format:
-    - Use 'id' values from metadata (e.g., "103" not "Dams")
+    - Use 'id' values from metadata (e.g., state_code="8" not "Gujarat")
     - Include all required params (marked required in api_params)
     - API returns only 10 records by default. Pass limit (e.g., "50", "100") if you expect more records.
 
@@ -403,14 +422,6 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     api_dataset = dataset_map.get(dataset)
     if not api_dataset:
         return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
-
-    # Validate required parameters
-    if dataset in DATASETS_REQUIRING_INDICATOR:
-        if "indicator_code" not in filters:
-            return {
-                "error": f"indicator_code is required for {dataset}",
-                "hint": "Include the indicator_code you used in get_metadata"
-            }
 
     # v2: Uncomment for RBI support
     # if dataset in DATASETS_REQUIRING_SUB_INDICATOR:

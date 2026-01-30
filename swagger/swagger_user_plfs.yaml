@@ -24,6 +24,7 @@ paths:
           schema:
             type: integer
         - name: frequency_code
+          required: true
           in: query
           description: Enter the Frequency Code (1 - Annually, 2 - Quarterly, 3 - Monthly)
           schema:
