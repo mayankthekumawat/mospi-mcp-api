@@ -74,5 +74,12 @@ fetch_swagger.py
 test_swagger.py
 .swagger_test_cache.json
 
+# Swagger documentation (internal only)
+swagger/SWAGGER_ISSUES.md
+swagger/SWAGGER_TEST_RESULTS.md
+
+# Docs folder
+docs/
+
 # Context
 context.md
