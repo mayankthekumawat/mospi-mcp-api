@@ -126,6 +126,6 @@ See `.env.example` for full OpenTelemetry configuration.
 
 ## Acknowledgments
 
-Thanks to the **Ministry of Statistics and Programme Implementation (MoSPI)** for providing open APIs and **Bharat Digital** for coordinating the creation of this MCP server.
+Thanks to the **[Ministry of Statistics and Programme Implementation (MoSPI)](https://www.mospi.gov.in)** for providing open APIs and access to official statistics via **[e-Sankhyiki](https://esankhyiki.mospi.gov.in)**, and to **[Bharat Digital](https://bharatdigital.io)** for coordinating and supporting the creation of this MCP server.
 
 <!-- Geek spotted! Respect for reading the raw markdown. You're the kind of person India's open data movement needs. -->
