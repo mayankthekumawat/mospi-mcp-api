@@ -2,7 +2,7 @@
 
 ## Adding a New Dataset
 
-The server currently supports 7 datasets (v1). There are 11 more datasets commented out in `mospi_server.py` ready for v2. To enable a dataset or add a new one:
+The server currently supports 7 datasets. To add a new one:
 
 ### 1. Get the Swagger spec
 
@@ -112,5 +112,5 @@ asyncio.run(test())
 - Keep `mospi_server.py` as the single server file. All tools, validation, and routing live here.
 - Use swagger YAMLs for param definitions. Don't hardcode param lists.
 - Tool docstrings are LLM-facing. Write them as instructions, not developer docs.
-- v2 code is commented out with `# v2:` markers. Don't delete it.
+- Keep the codebase clean. Don't leave commented-out code blocks.
 

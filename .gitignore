@@ -83,3 +83,6 @@ docs/
 
 # Context
 context.md
+
+# Claude Code
+.claude/

@@ -25,15 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [Unreleased]
-
-### Planned for v2
-- 11 additional datasets: HCES, NSS78, NSS77, TUS, NFHS, ASUSE, GENDER, RBI, ENVSTATS, AISHE, CPIALRL
-- Enhanced error handling
-- Rate limiting documentation
-
----
-
 ## Version History
 
 | Version | Date | Description |
