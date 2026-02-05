@@ -176,7 +176,8 @@ mospi-mcp-api/
 │   └── client.py            # MoSPI API client - HTTP requests to api.mospi.gov.in
 ├── swagger/                 # Swagger YAML specs per dataset (source of truth for params)
 │   └── swagger_user_*.yaml
-├── telemetry.py             # OpenTelemetry middleware for tracing
+├── observability/
+│   └── telemetry.py         # OpenTelemetry middleware for tracing
 ├── tests/                   # Per-dataset test files
 ├── Dockerfile               # Production container with OTEL instrumentation
 ├── docker-compose.yml       # Full stack with Jaeger

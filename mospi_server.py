@@ -4,7 +4,7 @@ import yaml
 from typing import Dict, Any, Optional
 from fastmcp import FastMCP
 from mospi.client import mospi
-from telemetry import TelemetryMiddleware
+from observability.telemetry import TelemetryMiddleware
 
 SWAGGER_DIR = os.path.join(os.path.dirname(__file__), "swagger")
 

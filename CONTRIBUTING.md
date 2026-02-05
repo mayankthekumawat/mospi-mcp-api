@@ -67,7 +67,7 @@ If the MoSPI API adds or changes params, update the swagger YAML and the server 
 mospi_server.py       # All MCP tools + validation logic (single file server)
 mospi/client.py       # HTTP client for MoSPI API calls
 swagger/*.yaml        # Swagger specs per dataset (param source of truth)
-telemetry.py          # OpenTelemetry middleware
+observability/        # OpenTelemetry middleware (telemetry.py)
 tests/                # Per-dataset test files
 ```
 
