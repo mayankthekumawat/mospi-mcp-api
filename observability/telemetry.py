@@ -102,6 +102,12 @@ class TelemetryMiddleware(Middleware):
                 output_str, output_size = truncate_json(output_data)
                 span.set_attribute("tool.output", output_str)
                 span.set_attribute("tool.output_size", output_size)
+                # Log full output (not truncated) for benchmark parsing
+                try:
+                    full_output = json.dumps(output_data, default=str, ensure_ascii=False)
+                except (TypeError, ValueError):
+                    full_output = str(output_data)
+                print(f"[TELEMETRY] Output ({output_size} bytes): {full_output}", file=sys.stderr)
 
         return result
 
