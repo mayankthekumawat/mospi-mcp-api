@@ -25,10 +25,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Install OpenTelemetry auto-instrumentation packages
 RUN opentelemetry-bootstrap -a install
 
-# Copy the server code, telemetry module, and the dataset folder
+# Copy the server code, observability module, dataset folder, and swagger specs
 COPY mospi_server.py .
-COPY telemetry.py .
+COPY observability/ ./observability/
 COPY mospi/ ./mospi/
+COPY swagger/ ./swagger/
 
 # Expose the port for HTTP transport
 EXPOSE 8000

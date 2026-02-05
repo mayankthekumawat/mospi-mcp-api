@@ -65,3 +65,24 @@ metadatas/
 # Personal notes
 handover.md
 handover_final.md
+
+# Code analysis
+CODEBASE_ANALYSIS.md
+
+# Swagger test scripts
+fetch_swagger.py
+test_swagger.py
+.swagger_test_cache.json
+
+# Swagger documentation (internal only)
+swagger/SWAGGER_ISSUES.md
+swagger/SWAGGER_TEST_RESULTS.md
+
+# Docs folder
+docs/
+
+# Context
+context.md
+
+# Claude Code
+.claude/

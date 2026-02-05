@@ -10,7 +10,6 @@ All data is visible in Jaeger for analysis.
 """
 
 import json
-import sys
 from typing import Any
 
 from fastmcp.server.middleware import Middleware, MiddlewareContext
@@ -82,32 +81,8 @@ class TelemetryMiddleware(Middleware):
         tool_name = getattr(context.message, 'name', 'unknown')
         tool_args = getattr(context.message, 'arguments', None)
 
-        # DEBUG: Log middleware invocation
-        print(f"[TELEMETRY] === MIDDLEWARE INVOKED ===", file=sys.stderr)
-        print(f"[TELEMETRY] Tool: {tool_name}", file=sys.stderr)
-        print(f"[TELEMETRY] Args: {tool_args}", file=sys.stderr)
-
-        # DEBUG: Try to get User-Agent early for logging
-        try:
-            fastmcp_ctx = context.fastmcp_context
-            if fastmcp_ctx:
-                request_ctx = getattr(fastmcp_ctx, 'request_context', None)
-                if request_ctx:
-                    headers = getattr(request_ctx, 'headers', None)
-                    if headers:
-                        ua = headers.get('user-agent', 'unknown') if hasattr(headers, 'get') else 'unknown'
-                        print(f"[TELEMETRY] User-Agent: {ua}", file=sys.stderr)
-        except Exception as e:
-            print(f"[TELEMETRY] Could not get UA: {e}", file=sys.stderr)
-
         # Create a child span using FastMCP's tracer
         with self._tracer.start_as_current_span(f"tool.{tool_name}") as span:
-            # DEBUG: Log trace and span IDs
-            ctx = span.get_span_context()
-            trace_id = format(ctx.trace_id, '032x') if ctx.trace_id else 'none'
-            span_id = format(ctx.span_id, '016x') if ctx.span_id else 'none'
-            print(f"[TELEMETRY] Span created - trace_id={trace_id}, span_id={span_id}", file=sys.stderr)
-            print(f"[TELEMETRY] Is recording: {span.is_recording()}", file=sys.stderr)
             # Add pre-execution attributes
             span.set_attribute("tool.name", tool_name)
 
@@ -120,7 +95,6 @@ class TelemetryMiddleware(Middleware):
 
             # Execute the tool
             result = await call_next(context)
-            print(f"[TELEMETRY] Tool executed successfully: {tool_name}", file=sys.stderr)
 
             # Add post-execution attributes
             output_data = getattr(result, 'structured_content', result)

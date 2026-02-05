@@ -1,225 +1,243 @@
 # MoSPI MCP Server
 
-Production-ready MCP (Model Context Protocol) server for accessing MoSPI (Ministry of Statistics and Programme Implementation) data APIs. Built with FastMCP 2.0.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastMCP](https://img.shields.io/badge/FastMCP-3.0-green.svg)](https://gofastmcp.com)
+[![Build](https://github.com/mayankthekumawat/mospi-mcp-api/actions/workflows/deploy.yml/badge.svg)](https://github.com/mayankthekumawat/mospi-mcp-api/actions/workflows/deploy.yml)
+[![Docker](https://img.shields.io/badge/Docker-ghcr.io-blue.svg)](https://github.com/mayankthekumawat/mospi-mcp-api/pkgs/container/mospi-mcp-api)
 
-## Features
+MCP (Model Context Protocol) server for accessing India's Ministry of Statistics and Programme Implementation (MoSPI) data APIs. Built with FastMCP 3.0.
 
-- **18 MoSPI Datasets**: "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "Energy", "HCES", "NSS78", "TUS", "NFHS", "ASUSE", "Gender", "RBI", "EnvStats", "AISHE", "CPIALRL", "NSS77"
-- **FastMCP 2.0**: Modern, simplified, production-ready framework
-- **Multiple Deployment Options**: FastMCP Cloud, Docker, or self-hosted
-- **HTTP & stdio transports**: Remote access or local MCP clients
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Datasets](#datasets)
+- [MCP Tools](#mcp-tools)
+- [Quick Start](#quick-start)
+  - [Installation](#installation)
+  - [Running the Server](#running-the-server)
+  - [Connecting from an MCP Client](#connecting-from-an-mcp-client)
+- [Deployment](#deployment)
+  - [Docker](#docker)
+  - [Docker Compose](#docker-compose)
+  - [FastMCP Cloud](#fastmcp-cloud)
+- [Architecture](#architecture)
+- [Configuration](#configuration)
+- [Contributing](#contributing)
+- [Resources](#resources)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
+---
+
+## Overview
+
+This server provides AI-ready access to official Indian government statistics through the Model Context Protocol (MCP). It acts as a bridge between AI assistants (Claude, ChatGPT, Cursor, etc.) and MoSPI's open data APIs, enabling natural language queries for economic, demographic, and social indicators.
+
+**Key Features:**
+- 7 statistical datasets covering employment, inflation, industrial production, GDP, and energy
+- Sequential 4-tool workflow designed for LLM consumption
+- Swagger-driven parameter validation
+- Full OpenTelemetry integration for observability
+- Production-ready Docker deployment
+
+---
+
+## Datasets
+
+| Dataset | Full Name | Use For |
+|---------|-----------|---------|
+| **PLFS** | Periodic Labour Force Survey | Jobs, unemployment, wages, workforce participation |
+| **CPI** | Consumer Price Index | Retail inflation, cost of living, commodity prices |
+| **IIP** | Index of Industrial Production | Industrial growth, manufacturing output |
+| **ASI** | Annual Survey of Industries | Factory performance, industrial employment |
+| **NAS** | National Accounts Statistics | GDP, economic growth, national income |
+| **WPI** | Wholesale Price Index | Wholesale inflation, producer prices |
+| **ENERGY** | Energy Statistics | Energy production, consumption, fuel mix |
+<!-- | NMKN | National Namkeen Consumption Index | Bhujia per capita, sev consumption patterns, mixture preference by state | -->
+
+---
+
+## MCP Tools
+
+The server exposes 4 tools that follow a sequential workflow:
+
+```
+1_know_about_mospi_api  →  2_get_indicators  →  3_get_metadata  →  4_get_data
+```
+
+| Step | Tool | Description |
+|------|------|-------------|
+| 1 | `1_know_about_mospi_api()` | Overview of all datasets. Start here to find the right dataset. |
+| 2 | `2_get_indicators(dataset)` | List available indicators for the chosen dataset. |
+| 3 | `3_get_metadata(dataset, ...)` | Get valid filter values (states, years, categories) and API parameters. |
+| 4 | `4_get_data(dataset, filters)` | Fetch data using filter key-value pairs from metadata. |
+
+**Important:** Tools must be called in order. Skipping `3_get_metadata` will result in invalid filter codes.
+
+---
 
 ## Quick Start
 
-### Local Development
+### Installation
 
-1. **Install Dependencies**
+```bash
+# Clone the repository
+git clone https://github.com/your-org/mospi-mcp-api.git
+cd mospi-mcp-api
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+# Create virtual environment (recommended)
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
-2. **Run the Server**
+# Install dependencies
+pip install -r requirements.txt
+```
 
-   ```bash
-   # Method 1: Direct Python execution
-   python mospi_server.py
+### Running the Server
 
-   # Method 2: Using FastMCP CLI (recommended)
-   fastmcp run mospi_server.py:mcp --transport http --port 8000
-   ```
+```bash
+# HTTP transport (remote access)
+python mospi_server.py
 
-3. **Access the Server**
-   - Server URL: `http://localhost:8000/mcp`
-   - The server runs with HTTP transport for remote access
-   - For local stdio access: `fastmcp run mospi_server.py:mcp` (no transport flag)
+# OR using FastMCP CLI
+fastmcp run mospi_server.py:mcp --transport http --port 8000
 
-### Test the Server
+# stdio transport (local MCP clients)
+fastmcp run mospi_server.py:mcp
+```
+
+Server runs at `http://localhost:8000/mcp`
+
+### Connecting from an MCP Client
 
 ```python
 import asyncio
 from fastmcp import Client
 
-async def test_server():
+async def main():
     async with Client("http://localhost:8000/mcp") as client:
-        # Get API documentation
-        result = await client.call_tool("know_about_mospi_api", {})
-        print(result)
+        # Step 1: Get dataset overview
+        overview = await client.call_tool("1_know_about_mospi_api", {})
+        print(overview)
 
-asyncio.run(test_server())
+        # Step 2: Get indicators for PLFS
+        indicators = await client.call_tool("2_get_indicators", {
+            "dataset": "PLFS",
+            "user_query": "unemployment rate"
+        })
+        print(indicators)
+
+asyncio.run(main())
 ```
 
-## Production Deployment
+---
 
-### Option 1: FastMCP Cloud (Recommended)
+## Deployment
 
-[FastMCP Cloud](https://fastmcp.cloud) is **free for personal servers** and optimized for FastMCP deployments.
-
-**Steps:**
-
-1. Push your code to GitHub
-2. Sign in to [FastMCP Cloud](https://fastmcp.cloud) with GitHub
-3. Create a new project and enter `mospi_server.py:mcp` as the entrypoint
-4. Done! Your server is live at `https://your-project.fastmcp.app/mcp`
-
-**Benefits:**
-
-- Zero configuration
-- Built-in authentication
-- Automatic HTTPS
-- Web-based testing interface
-- Free for personal use
-
-### Option 2: Docker Deployment
-
-#### Build and Run Locally
+### Docker
 
 ```bash
 # Build the image
 docker build -t mospi-mcp .
 
 # Run the container
-docker run -d \
-  -p 8000:8000 \
-  --name mospi-server \
-  mospi-mcp
-
-# Test the server
-curl http://localhost:8000/mcp
+docker run -d -p 8000:8000 --name mospi-server mospi-mcp
 ```
 
-#### Using GitHub Container Registry
+### Docker Compose
 
-The included GitHub Actions workflow automatically builds and publishes Docker images.
-
-**Setup:**
-
-1. Push to GitHub (triggers auto-build)
-2. Image published to: `ghcr.io/YOUR_USERNAME/mospi-mcp-deployment:latest`
-3. Deploy anywhere:
+Includes Jaeger for distributed tracing visualization:
 
 ```bash
-docker run -d \
-  -p 8000:8000 \
-  ghcr.io/YOUR_USERNAME/mospi-mcp-deployment:latest
+docker-compose up -d
 ```
 
-### Option 3: PaaS Deployment (Railway, Render, etc.)
+Services:
+- **MoSPI Server**: http://localhost:8000/mcp
+- **Jaeger UI**: http://localhost:16686
 
-#### Railway
+### FastMCP Cloud
 
-1. Connect your GitHub repository
-2. Railway auto-detects the Dockerfile
-3. Server deploys automatically on push to `main`
+1. Push code to GitHub
+2. Sign in to [FastMCP Cloud](https://fastmcp.cloud)
+3. Create project with entrypoint `mospi_server.py:mcp`
 
-#### Render
-
-1. Create a new Web Service
-2. Select "Docker" environment
-3. Point to your repository
-4. Set health check path to `/health` (FastMCP provides this automatically)
+---
 
 ## Architecture
 
-### Components
-
-- **mospi_server.py**: Main FastMCP 2.0 server entry point
-- **mospi/**: Dataset modules with 55+ MCP tools (18 datasets × 3 tools each)
-- **Dockerfile**: Container definition using FastMCP CLI
-- **.github/workflows/deploy.yml**: CI/CD pipeline for auto-builds
-
-## Available Tools
-
-The server provides 55+ MCP tools across 18 datasets. Each dataset has 3 tools:
-
-- `get_X_indicators()`: List available indicators
-- `get_X_metadata()`: Get filter codes for an indicator
-- `get_X_data()`: Fetch actual data
-
-**Datasets:** PLFS, CPI, IIP, ASI, NAS, WPI, Energy, HCES, NSS78, TUS, NFHS, ASUSE, Gender, RBI, EnvStats, AISHE, CPIALRL, NSS77
-
-**Main tool:** `know_about_mospi_api()` - Complete API documentation (call this first)
-
-## CLI Usage
-
-FastMCP 2.0 includes a powerful CLI:
-
-```bash
-# Run with different transports
-fastmcp run mospi_server.py:mcp                           # stdio (default)
-fastmcp run mospi_server.py:mcp --transport http          # HTTP on port 8000
-fastmcp run mospi_server.py:mcp --transport http --port 3000  # Custom port
-
-# Development mode with auto-reload
-fastmcp dev mospi_server.py:mcp --transport http
-
-# Get server info
-fastmcp inspect mospi_server.py:mcp
 ```
+mospi-mcp-api/
+├── mospi_server.py          # FastMCP server - tools, validation, routing
+├── mospi/
+│   └── client.py            # MoSPI API client - HTTP requests to api.mospi.gov.in
+├── swagger/                 # Swagger YAML specs per dataset (source of truth for params)
+│   └── swagger_user_*.yaml
+├── observability/
+│   └── telemetry.py         # OpenTelemetry middleware for tracing
+├── tests/                   # Per-dataset test files
+├── Dockerfile               # Production container with OTEL instrumentation
+├── docker-compose.yml       # Full stack with Jaeger
+└── requirements.txt
+```
+
+### Design Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Swagger as Source of Truth** | API parameters validated against YAML specs in `swagger/`, not hardcoded |
+| **Auto-routing** | CPI routes to Group/Item endpoint based on filters; IIP routes to Annual/Monthly |
+| **Validation First** | All filters validated before API calls with clear error messages |
+| **LLM-Optimized** | Tool docstrings contain explicit rules and workflow instructions |
+
+---
 
 ## Configuration
 
-### Environment Variables
+Environment variables for OpenTelemetry:
 
-| Variable | Required | Description                    |
-| -------- | -------- | ------------------------------ |
-| `PORT`   | No       | Port to run on (default: 8000) |
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `OTEL_SERVICE_NAME` | Service name in traces | `mospi-mcp-server` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint | `http://localhost:4317` |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | Protocol (`grpc` or `http/protobuf`) | `grpc` |
+| `OTEL_TRACES_EXPORTER` | Exporter type (`otlp`, `console`, `none`) | `otlp` |
 
-**Note:** FastMCP 2.0 has built-in auth support. For production deployments with authentication, use FastMCP Cloud or configure auth in your FastMCP server initialization.
+See `.env.example` for full configuration options.
 
-## Development
+---
 
-### Project Structure
+## Contributing
 
-```
-mospi-mcp-deployment/
-├── mospi_server.py          # Main FastMCP server entry point
-├── mospi/                   # Dataset modules
-│   ├── __init__.py
-│   ├── client.py            # MoSPI API client
-│   └── datasets/            # 18 dataset tool modules
-├── tests/                   # Test files for all datasets
-├── scripts/                 # Utility scripts
-├── docs/                    # Documentation
-├── requirements.txt         # Python dependencies
-├── Dockerfile               # Container definition
-├── README.md                # This file
-└── .github/workflows/       # CI/CD pipeline
-```
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
 
-### Testing Locally
+- Adding new datasets
+- Project structure
+- Development setup
+- Code style
 
-```bash
-# Install in development mode
-pip install -e .
-
-# Run tests (if you add them)
-pytest
-
-# Run with auto-reload during development
-fastmcp dev mospi_server.py:mcp --transport http
-```
+---
 
 ## Resources
 
-- **FastMCP Documentation**: https://gofastmcp.com
-- **FastMCP Cloud**: https://fastmcp.cloud (free for personal use)
-- **Model Context Protocol**: https://modelcontextprotocol.io
-- **MoSPI Open APIs**: https://api.mospi.gov.in
+- [MoSPI Open APIs](https://api.mospi.gov.in) - Official API documentation and e-Sankhyiki portal
+- [FastMCP Documentation](https://gofastmcp.com) - MCP framework docs
+- [Model Context Protocol](https://modelcontextprotocol.io) - MCP specification
+
+---
 
 ## License
 
-This project provides an interface to MoSPI's public APIs. Refer to MoSPI's terms of service for data usage guidelines.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-**Fun Facts:**
+## Acknowledgments
 
-- 🚀 Built with 55+ MCP tools across 18 datasets
-- ☕ Powered by lots of coffee and dedication to open data
+- **[Ministry of Statistics and Programme Implementation (MoSPI)](https://www.mospi.gov.in)** for providing open APIs via the [e-Sankhyiki](https://esankhyiki.mospi.gov.in) portal
+- **[Bharat Digital](https://bharatdigital.io)** for coordinating and supporting the creation of this MCP server
 
-### Acknowledgments
-
-Special thanks to the **Ministry of Statistics and Programme Implementation (MoSPI)** for providing open APIs and **Bharat Digital** to coordinate the creation of the MCP that makes this data accessible to all.
-
----
+<!-- Geek spotted! Respect for reading the raw markdown. You're the kind of person India's open data movement needs. -->
