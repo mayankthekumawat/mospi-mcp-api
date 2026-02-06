@@ -44,6 +44,8 @@ This server provides AI-ready access to official Indian government statistics th
 - Full OpenTelemetry integration for observability
 - Production-ready Docker deployment
 
+If you want to connect your AI agent of choice with the MCP server, you can directly connect it with MOSPI's MCP server. Instructions are available at https://www.datainnovation.mospi.gov.in/mospi-mcp. Instructions to connect ChatGPT or Claude to MCP are available here: https://www.datainnovation.mospi.gov.in/mospi-mcp
+
 ---
 
 ## Datasets
@@ -249,6 +251,6 @@ Know more: https://www.datainnovation.mospi.gov.in/home
 
 ## Acknowledgments
 
-Made in partnership with - **[Bharat Digital](https://bharatdigital.io)** in pursuit of modernising and humanising how government's use technology in service of the public. 
+Made in partnership with **[Bharat Digital](https://bharatdigital.io)** in pursuit of modernising and humanising how government's use technology in service of the public. 
 
 <!-- Geek spotted! Respect for reading the raw markdown. You're the kind of person India's open data movement needs. -->
