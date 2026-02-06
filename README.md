@@ -28,6 +28,7 @@ MCP (Model Context Protocol) server for accessing India's Ministry of Statistics
 - [Contributing](#contributing)
 - [Resources](#resources)
 - [License](#license)
+- [About DIID](#diid)
 - [Acknowledgments](#acknowledgments)
 
 ---
@@ -80,6 +81,10 @@ The server exposes 4 tools that follow a sequential workflow:
 ---
 
 ## Quick Start
+
+If you want to connect your AI agent of choice with the MCP server, you can directly connect it with MOSPI's MCP server. Instructions are available at https://www.datainnovation.mospi.gov.in/mospi-mcp. Instructions to connect ChatGPT or Claude to MCP are available here: https://www.datainnovation.mospi.gov.in/mospi-mcp
+
+Below instructions are for self-hosting the MCP server. 
 
 ### Installation
 
@@ -235,9 +240,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
+## DIID
+
+The Data Innovation Lab aims to promote innovation and the use of Information Technology in official statistics, including modernizing survey methods. It seeks to address the current challenges faced by the National Statistical System (NSS). The lab will serve as a platform for testing and developing new ideas through proof-of-concept projects. It will foster collaboration with a wide range of participants such as entrepreneurs, researchers, start-ups, academic institutions, and renowned national and international organizations. By creating an open and dynamic environment, the lab will support the advancement of statistical systems and help improve the quality and efficiency of data collection and analysis.
+
+Know more: https://www.datainnovation.mospi.gov.in/home
+
+
 ## Acknowledgments
 
-- **[Ministry of Statistics and Programme Implementation (MoSPI)](https://www.mospi.gov.in)** for providing open APIs via the [e-Sankhyiki](https://esankhyiki.mospi.gov.in) portal
-- **[Bharat Digital](https://bharatdigital.io)** for coordinating and supporting the creation of this MCP server
+Made in partnership with - **[Bharat Digital](https://bharatdigital.io)** in pursuit of modernising and humanising how government's use technology in service of the public. 
 
 <!-- Geek spotted! Respect for reading the raw markdown. You're the kind of person India's open data movement needs. -->
