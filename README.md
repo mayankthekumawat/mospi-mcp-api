@@ -3,8 +3,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastMCP](https://img.shields.io/badge/FastMCP-3.0-green.svg)](https://gofastmcp.com)
-[![Build](https://github.com/mayankthekumawat/mospi-mcp-api/actions/workflows/deploy.yml/badge.svg)](https://github.com/mayankthekumawat/mospi-mcp-api/actions/workflows/deploy.yml)
-[![Docker](https://img.shields.io/badge/Docker-ghcr.io-blue.svg)](https://github.com/mayankthekumawat/mospi-mcp-api/pkgs/container/mospi-mcp-api)
 
 MCP (Model Context Protocol) server for accessing India's Ministry of Statistics and Programme Implementation (MoSPI) data APIs. Built with FastMCP 3.0.
 
