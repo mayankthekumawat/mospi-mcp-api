@@ -242,10 +242,24 @@ def _load_all_metadata(dataset: str) -> list[dict]:
                 "name": balance["use_of_energy_balance_name"],
             })
 
-        # Filters
-        filters_data = _fetch_json(f"{BASE_URL}/api/energy/getEnergyFilterByIndicatorId",
-                                   {"indicator_code": 1, "use_of_energy_balance_code": 1})
-        _flatten_filters(entries, filters_data.get("data", {}), dataset)
+        # Filters — load all indicator × balance combinations so sub-commodities
+        # and sectors are searchable regardless of which combo the query needs.
+        # Merge filter dicts to deduplicate entries that appear in multiple combos.
+        merged_filters = {}
+        for ind_code in [ind["indicator_code"] for ind in ind_data.get("indicator", [])]:
+            for bal_code in [b["use_of_energy_balance_code"] for b in ind_data.get("use_of_energy_balance", [])]:
+                filters_data = _fetch_json(f"{BASE_URL}/api/energy/getEnergyFilterByIndicatorId",
+                                           {"indicator_code": ind_code, "use_of_energy_balance_code": bal_code})
+                for dim_name, values in filters_data.get("data", {}).items():
+                    if not isinstance(values, list):
+                        continue
+                    existing = {str(v): v for v in merged_filters.get(dim_name, [])}
+                    for item in values:
+                        key = str(item)
+                        if key not in existing:
+                            existing[key] = item
+                    merged_filters[dim_name] = list(existing.values())
+        _flatten_filters(entries, merged_filters, dataset)
 
     return entries
 
@@ -291,23 +305,32 @@ def _flatten_filters(entries: list, filters: dict, dataset: str) -> None:
 
             # Add hierarchy context if applicable
             if hierarchy and dim_name in hierarchy["dimensions"]:
+                # Add dimension level (e.g., "2-digit" from "nic_2_digit")
+                level_label = dim_name  # default
+                for part in dim_name.split("_"):
+                    if "digit" in part or part.isdigit():
+                        level_label = dim_name.replace("_", " ")
+                        break
+
                 parent_code_key = hierarchy.get("parent_key")
                 if parent_code_key and parent_code_key in item:
                     parent_code = str(item[parent_code_key])
                     parent_name = parent_lookup.get(parent_code, parent_code)
-                    entry["context"] = parent_name
+                    entry["context"] = f"{level_label}, parent: {parent_name}"
                 elif "parent_nic_code" in item:
                     parent_code = str(item["parent_nic_code"])
                     parent_name = parent_lookup.get(parent_code, parent_code)
-                    entry["context"] = parent_name
+                    entry["context"] = f"{level_label}, parent: {parent_name}"
                 elif dim_name in ("subgroup", "subcategory", "subindustry"):
-                    # Try to find parent via parent code key in the item
                     for pk in item.keys():
                         if pk.endswith("_code") and pk != code_key:
                             parent_code = str(item[pk])
                             parent_name = parent_lookup.get(parent_code, parent_code)
-                            entry["context"] = parent_name
+                            entry["context"] = f"{dim_name}, parent: {parent_name}"
                             break
+                else:
+                    # Top-level dimension (no parent) — still label it
+                    entry["context"] = f"{level_label} (top-level)"
 
             entries.append(entry)
 
