@@ -285,7 +285,7 @@ def _flatten_filters(entries: list, filters: dict, dataset: str) -> None:
 
             param_name = code_key
             code_val = item[code_key]
-            name_val = item.get(name_key, str(code_val)) if name_key else str(code_val)
+            name_val = str(item.get(name_key, code_val)) if name_key else str(code_val)
 
             entry = {"param": param_name, "code": code_val, "name": name_val}
 
@@ -348,8 +348,8 @@ def search_dataset(dataset: str, search_terms: list[str]) -> dict[str, Any]:
     matched_params = set()
 
     for entry in all_entries:
-        searchable = entry["name"].lower()
-        context_str = entry.get("context", "").lower()
+        searchable = str(entry["name"]).lower()
+        context_str = str(entry.get("context", "")).lower()
         for term in search_terms:
             term_lower = term.lower()
             if term_lower in searchable or term_lower in context_str or term_lower in str(entry["code"]).lower():
