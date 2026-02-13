@@ -24,6 +24,14 @@ class MoSPI:
             "NAS": "/api/nas/getNASData",
             "WPI": "/api/wpi/getWpiRecords",
             "Energy": "/api/energy/getEnergyRecords",
+            "AISHE": "/api/aishe/getAisheRecords",
+            "ASUSE": "/api/asuse/getAsuseRecords",
+            "GENDER": "/api/gender/getGenderRecords",
+            "NFHS": "/api/nfhs/getNfhsRecords",
+            "ENVSTATS": "/api/env/getEnvStatsRecords",
+            "RBI": "/api/rbi/getRbiRecords",
+            "NSS77": "/api/nss-77/getNss77Records",
+            "NSS78": "/api/nss-78/getNss78Records",
         }
 
     def get_data(self, dataset_name: str, params: Optional[Dict] = None) -> Dict[str, Any]:
@@ -406,6 +414,337 @@ class MoSPI:
         except requests.RequestException as e:
             return {"error": str(e), "statusCode": False}
 
+    # =========================================================================
+    # AISHE (All India Survey on Higher Education) Methods
+    # =========================================================================
+
+    def get_aishe_indicators(self) -> Dict[str, Any]:
+        """Fetch list of AISHE indicators from MoSPI API.
+
+        Returns 9 indicators covering:
+        - Number of Universities
+        - Number of Colleges
+        - Student Enrolment
+        - Social Group-wise Enrolment
+        - PWD & Minority Enrolment
+        - Gross Enrolment Ratio (GER)
+        - Gender Parity Index (GPI)
+        - Pupil Teacher Ratio
+        - Number of Teachers
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/aishe/getAisheIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_aishe_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available AISHE filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code (1-9)
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/aishe/getAisheFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    # =========================================================================
+    # ASUSE (Annual Survey of Unincorporated Sector Enterprises) Methods
+    # =========================================================================
+
+    def get_asuse_frequencies(self) -> Dict[str, Any]:
+        """Fetch list of ASUSE frequencies from MoSPI API."""
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/asuse/getAsuseFrequencyList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_asuse_indicators(self, frequency_code: int = 1) -> Dict[str, Any]:
+        """Fetch list of ASUSE indicators grouped by frequency_code.
+
+        Args:
+            frequency_code: 1=Annually, 2=Quarterly (ignored - fetches both)
+        """
+        url = f"{self.base_url}/api/asuse/getAsuseIndicatorListByFrequency"
+        result = {}
+        try:
+            for fc, label in [(1, "Annual"), (2, "Quarterly")]:
+                response = requests.get(url, params={"frequency_code": fc}, timeout=30)
+                response.raise_for_status()
+                data = response.json()
+                result[f"frequency_code_{fc}_{label}"] = data.get("data", [])
+            return {
+                "indicators_by_frequency": result,
+                "_note": "frequency_code=1 (Annual) has 35 indicators on establishment details, ownership, workers, GVA. "
+                         "frequency_code=2 (Quarterly) has 15 indicators including market establishments, worker counts. "
+                         "For RECENT data or quarterly breakdowns (Jan-Mar, Apr-Jun, etc.), use frequency_code=2. "
+                         "Pass the correct frequency_code in 3_get_metadata() and 4_get_data().",
+                "statusCode": True,
+            }
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_asuse_filters(self, indicator_code: int, frequency_code: int = 1) -> Dict[str, Any]:
+        """Fetch available ASUSE filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code
+            frequency_code: 1=Annually, 2=Quarterly
+        """
+        params = {
+            "indicator_code": indicator_code,
+            "frequency_code": frequency_code
+        }
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/asuse/getAsuseFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    # =========================================================================
+    # Gender Statistics Methods
+    # =========================================================================
+
+    def get_gender_indicators(self) -> Dict[str, Any]:
+        """Fetch list of Gender indicators from MoSPI API.
+
+        Returns 157 indicators covering demographics, health, education,
+        labour, time use, financial inclusion, political participation,
+        crimes against women, and more.
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/gender/getGenderIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_gender_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available Gender filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code (1-157)
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/gender/getGenderFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    # =========================================================================
+    # NFHS (National Family Health Survey) Metadata Methods
+    # =========================================================================
+
+    def get_nfhs_indicators(self) -> Dict[str, Any]:
+        """Fetch list of NFHS indicators from MoSPI API."""
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/nfhs/getNfhsIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_nfhs_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available NFHS filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/nfhs/getNfhsFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    # =========================================================================
+    # Environment Statistics Methods
+    # =========================================================================
+
+    def get_envstats_indicators(self) -> Dict[str, Any]:
+        """Fetch list of Environment Statistics indicators from MoSPI API.
+
+        Returns 124 indicators covering climate, biodiversity, pollution,
+        resources, disasters, health, and environmental expenditure.
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/env/getEnvStatsIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_envstats_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available Environment Statistics filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code (1-130)
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/env/getEnvStatsFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    # =========================================================================
+    # RBI (Reserve Bank of India) Statistics Methods
+    # =========================================================================
+
+    def get_rbi_indicators(self) -> Dict[str, Any]:
+        """Fetch list of RBI indicators from MoSPI API.
+
+        Returns 39 indicators covering foreign trade, balance of payments,
+        forex rates, external debt, and NRI deposits.
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/rbi/getRbiIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_rbi_filters(self, sub_indicator_code: int) -> Dict[str, Any]:
+        """Fetch available RBI filters for given indicator.
+
+        Args:
+            sub_indicator_code: Indicator code (1-48)
+        """
+        params = {"sub_indicator_code": sub_indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/rbi/getRbiMetaData",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_nss77_indicators(self) -> Dict[str, Any]:
+        """Fetch list of NSS77 indicators from MoSPI API.
+
+        Returns indicators from NSS 77th Round (Situation Assessment Survey of Agricultural Households).
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/nss-77/getIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_nss77_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available NSS77 filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code (16-51)
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/nss-77/getFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_nss78_indicators(self) -> Dict[str, Any]:
+        """Fetch list of NSS78 indicators from MoSPI API.
+
+        Returns indicators from NSS 78th Round (All India Survey on Domestic Tourists).
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/nss-78/getIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_nss78_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available NSS78 filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code (2-15)
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/nss-78/getFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
 
 
 # Global instance

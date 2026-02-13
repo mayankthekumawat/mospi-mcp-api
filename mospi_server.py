@@ -22,6 +22,8 @@ mcp.add_middleware(TelemetryMiddleware())
 
 VALID_DATASETS = [
     "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY",
+    "AISHE", "ASUSE", "GENDER", "NFHS", "ENVSTATS", "RBI",
+    "NSS77", "NSS78",
 ]
 
 # Maps dataset key -> (swagger_yaml_file, endpoint_path)
@@ -38,11 +40,20 @@ DATASET_SWAGGER = {
     "NAS": ("swagger_user_nas.yaml", "/api/nas/getNASData"),
     "WPI": ("swagger_user_wpi.yaml", "/api/wpi/getWpiRecords"),
     "ENERGY": ("swagger_user_energy.yaml", "/api/energy/getEnergyRecords"),
+    "AISHE": ("swagger_user_aishe.yaml", "/api/aishe/getAisheRecords"),
+    "ASUSE": ("swagger_user_asuse.yaml", "/api/asuse/getAsuseRecords"),
+    "GENDER": ("swagger_user_gender.yaml", "/api/gender/getGenderRecords"),
+    "NFHS": ("swagger_user_nfhs.yaml", "/api/nfhs/getNfhsRecords"),
+    "ENVSTATS": ("swagger_user_envstats.yaml", "/api/env/getEnvStatsRecords"),
+    "RBI": ("swagger_user_rbi.yaml", "/api/rbi/getRbiRecords"),
+    "NSS77": ("swagger_user_nss77.yaml", "/api/nss-77/getNss77Records"),
+    "NSS78": ("swagger_user_nss78.yaml", "/api/nss-78/getNss78Records"),
 }
 
 # Datasets that require indicator_code in get_data
 DATASETS_REQUIRING_INDICATOR = [
-    "PLFS", "NAS", "ENERGY",
+    "PLFS", "NAS", "ENERGY", "AISHE", "ASUSE", "GENDER", "NFHS", "ENVSTATS",
+    "NSS77", "NSS78",
 ]
 
 
@@ -144,7 +155,7 @@ def get_indicators(
     Only ask user to choose if multiple indicators could match.
 
     Args:
-        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY
+        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI
                  For PLFS: frequency_code selects the indicator SET, not time granularity.
                  You MUST use frequency_code=1 in 3_get_metadata() — it covers all 8 indicators
                  including wages and already has quarterly breakdowns via quarter_code.
@@ -157,6 +168,14 @@ def get_indicators(
         "PLFS": mospi.get_plfs_indicators,
         "NAS": mospi.get_nas_indicators,
         "ENERGY": mospi.get_energy_indicators,
+        "AISHE": mospi.get_aishe_indicators,
+        "ASUSE": mospi.get_asuse_indicators,
+        "GENDER": mospi.get_gender_indicators,
+        "NFHS": mospi.get_nfhs_indicators,
+        "ENVSTATS": mospi.get_envstats_indicators,
+        "RBI": mospi.get_rbi_indicators,
+        "NSS77": mospi.get_nss77_indicators,
+        "NSS78": mospi.get_nss78_indicators,
         # Special datasets - return guidance instead of indicators
         "CPI": mospi.get_cpi_base_years,
         "IIP": lambda: {"message": "IIP uses categories instead of indicators. Call 3_get_metadata with base_year and frequency params.", "dataset": "IIP"},
@@ -213,14 +232,13 @@ def get_metadata(
     "Format" is NOT valid here (Format is for 4_get_data only). "series" is valid for NAS and CPI only.
 
     Args:
-        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY
-        indicator_code: REQUIRED for PLFS, NAS, ENERGY. MUST NOT pass for CPI, IIP, ASI, WPI.
-        frequency_code: REQUIRED for PLFS. MUST NOT pass for CPI, IIP, ASI, WPI.
-                        Selects indicator SET, NOT time granularity.
-                        1=Annual (all 8 indicators, includes quarterly data via quarter_code).
-                        2=Quarterly bulletin (different indicator set).
-                        3=Monthly bulletin (2025+ only).
-                        MUST NOT use 2 for quarterly data. Use 1 + quarter_code in 4_get_data().
+        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI
+        indicator_code: REQUIRED for PLFS, NAS, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI. MUST NOT pass for CPI, IIP, ASI, WPI.
+                       (For RBI: indicator_code is mapped to sub_indicator_code internally for consistency)
+        frequency_code: REQUIRED for PLFS and ASUSE. MUST NOT pass for CPI, IIP, ASI, WPI.
+                        For PLFS: 1=Annual (8 indicators), 2=Quarterly bulletin, 3=Monthly.
+                        For ASUSE: 1=Annual (35 indicators), 2=Quarterly (8 indicators including market establishments).
+                        Use frequency_code=2 for ASUSE quarterly/recent data.
         base_year: REQUIRED for CPI ("2024"/"2012"/"2010"), IIP ("2011-12"/"2004-05"/"1993-94"), NAS ("2022-23"/"2011-12"). MUST NOT pass for PLFS, ASI, WPI.
         level: REQUIRED for CPI ("Group"/"Item"). MUST NOT pass for other datasets.
         frequency: REQUIRED for IIP ("Annually"/"Monthly"). MUST NOT pass for other datasets.
@@ -303,6 +321,77 @@ def get_metadata(
             result["_next_step"] = _next
             return result
 
+        elif dataset == "AISHE":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for AISHE"}
+            result = mospi.get_aishe_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("AISHE")
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "ASUSE":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for ASUSE"}
+            result = mospi.get_asuse_filters(indicator_code=indicator_code, frequency_code=frequency_code or 1)
+            result["api_params"] = get_swagger_param_definitions("ASUSE")
+            result["_note"] = (
+                "IMPORTANT: Do NOT include frequency_code in 4_get_data() - indicator_code already determines annual vs quarterly. "
+                "MUTUALLY EXCLUSIVE FILTERS: Do NOT use sector_code AND broad_activity_category_code together. "
+                "The data has EITHER sector breakdown (Rural/Urban/Combined) OR activity breakdown (Manufacturing/Trade/Services/Others), not both."
+            )
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "GENDER":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for GENDER"}
+            result = mospi.get_gender_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("GENDER")
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "NFHS":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for NFHS"}
+            result = mospi.get_nfhs_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("NFHS")
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "ENVSTATS":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for ENVSTATS"}
+            result = mospi.get_envstats_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("ENVSTATS")
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "RBI":
+            # RBI uses sub_indicator_code, but accept indicator_code for consistency
+            rbi_indicator = sub_indicator_code if sub_indicator_code is not None else indicator_code
+            if rbi_indicator is None:
+                return {"error": "indicator_code (or sub_indicator_code) is required for RBI"}
+            result = mospi.get_rbi_filters(sub_indicator_code=rbi_indicator)
+            result["api_params"] = get_swagger_param_definitions("RBI")
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "NSS77":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for NSS77"}
+            result = mospi.get_nss77_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("NSS77")
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "NSS78":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for NSS78"}
+            result = mospi.get_nss78_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("NSS78")
+            result["_next_step"] = _next
+            return result
+
         else:
             return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
 
@@ -332,7 +421,7 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     Step 4: Fetch data from a MoSPI dataset.
 
     Args:
-        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)
+        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI)
         filters: Key-value pairs using 'id' values from 3_get_metadata().
                  PLFS MUST include frequency_code (1=Annual, 2=Quarterly, 3=Monthly).
                  NAS MUST include base_year ("2022-23" or "2011-12").
@@ -364,6 +453,14 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
         "NAS": "NAS",
         "WPI": "WPI",
         "ENERGY": "Energy",
+        "AISHE": "AISHE",
+        "ASUSE": "ASUSE",
+        "GENDER": "GENDER",
+        "NFHS": "NFHS",
+        "ENVSTATS": "ENVSTATS",
+        "RBI": "RBI",
+        "NSS77": "NSS77",
+        "NSS78": "NSS78",
     }
 
     api_dataset = dataset_map.get(dataset)
@@ -372,6 +469,10 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
 
     # Transform filters: skip None values and convert to strings
     transformed_filters = transform_filters(filters)
+
+    # RBI uses sub_indicator_code but accept indicator_code for consistency
+    if dataset == "RBI" and "indicator_code" in transformed_filters:
+        transformed_filters["sub_indicator_code"] = transformed_filters.pop("indicator_code")
 
     # Validate params against swagger spec
     validation = validate_filters(dataset, transformed_filters)
@@ -383,12 +484,12 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     # If no data found, hint to retry with different filters
     if isinstance(result, dict) and result.get("msg") == "No Data Found":
         result["_hint"] = (
-            "No data for this filter combination. Try these fixes: "
-            "1) Some filters represent the same concept under different params "
-            "(e.g., tertiary sector may be broad_industry_work_code OR nic_group_code) — "
-            "swap to the alternative param. "
-            "2) Remove optional filters one at a time — the breakdown you need "
-            "may already appear in the response without that filter."
+            "No data for this filter combination. Try these fixes IN ORDER: "
+            "1) MUTUALLY EXCLUSIVE FILTERS: Remove conflicting filters (e.g., ASUSE: sector_code + broad_activity_category_code). "
+            "2) COMMA-SEPARATED VALUES: Try single value instead (e.g., '1' not '1,2,3'). "
+            "3) Alternative params: Swap param names (e.g., broad_industry_work_code vs nic_group_code). "
+            "4) Simplify: Remove optional filters one at a time. "
+            "5) WRONG DATASET: If none work, try a DIFFERENT similar dataset - pick one yourself and retry full workflow from step 1."
         )
 
     return result
@@ -419,17 +520,17 @@ def know_about_mospi_api() -> Dict[str, Any]:
       MUST NOT fabricate data, MUST NOT cite external sources.
     ============================================================
 
-    Step 1: Get overview of all 7 datasets to find the right one for your query.
+    Step 1: Get overview of all 13 datasets to find the right one for your query.
 
     MUST call this first before any other tool.
-    Available: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY
+    Available: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI
 
     When to ask vs fetch:
     - VAGUE query (e.g., "inflation data") → ask user to clarify
     - SPECIFIC query (e.g., "unemployment rate 2023") → fetch directly, NEVER explain why it might not exist
     """
     return {
-        "total_datasets": 7,
+        "total_datasets": 15,
         "datasets": {
             "PLFS": {
                 "name": "Periodic Labour Force Survey",
@@ -466,6 +567,46 @@ def know_about_mospi_api() -> Dict[str, Any]:
                 "description": "2 indicators (KToE and PetaJoules) measuring energy balance across supply and consumption dimensions. Covers all energy commodities (coal, oil, gas, renewables, electricity) and tracks energy flows through production, transformation, and end-use sectors.",
                 "use_for": "Energy production, consumption patterns, fuel mix, sectoral energy use, climate analysis"
             },
+            "AISHE": {
+                "name": "All India Survey on Higher Education",
+                "description": "9 indicators on higher education: institution counts (universities, colleges), student enrollment (total, by social group, PWD, minority), Gross Enrollment Ratio (GER) by social group, Gender Parity Index (GPI), Pupil-Teacher Ratio (PTR) by mode, and teacher counts. Tracks access and equity in higher education.",
+                "use_for": "Universities, colleges, student enrolment, GER, GPI, higher education statistics"
+            },
+            "ASUSE": {
+                "name": "Annual Survey of Unincorporated Enterprises",
+                "description": "35 annual + 15 quarterly indicators on informal sector enterprises. Annual (frequency_code=1): establishment counts, ownership patterns, operational characteristics, digital adoption, registration status, worker composition, GVA. Quarterly (frequency_code=2): percentage of market establishments, hired worker establishments, proprietary establishments, worker counts. Use frequency_code=2 for quarterly/recent data.",
+                "use_for": "Informal sector, unincorporated enterprises, small businesses, self-employment, MSME statistics, market establishments"
+            },
+            "GENDER": {
+                "name": "Gender Statistics",
+                "description": "147 indicators across all domains: demographics (sex ratio, fertility, mortality, life expectancy), health (maternal mortality, immunization, nutrition, NCDs, HIV), education (literacy gaps, enrollment, GER, GPI, dropout rates, teacher ratios), labor (LFPR, WPR, wages, employment status, informal sector), time use patterns, financial inclusion (bank accounts, SHGs, government schemes), political participation (Lok Sabha, assemblies, PRIs, judiciary), leadership (corporate, police, defense, startups, MSMEs), and crimes against women (rape, domestic violence, cybercrimes, suicides).",
+                "use_for": "Gender statistics, women empowerment, sex ratio, female literacy, women in workforce, crimes against women"
+            },
+            "NFHS": {
+                "name": "National Family Health Survey",
+                "description": "21 indicators on health and demographics: population profile, fertility (TFR, age-specific, adolescent), mortality (infant, child), family planning (usage, unmet need, quality), maternal/delivery care, child health (vaccinations, disease treatment, feeding, nutrition), adult nutrition (BMI, anaemia), chronic conditions (diabetes, hypertension), cancer screening, HIV awareness, women's empowerment, and gender-based violence.",
+                "use_for": "Family health, fertility rates, infant mortality, maternal care, child immunization, nutrition, family planning, women's health, gender-based violence"
+            },
+            "ENVSTATS": {
+                "name": "Environment Statistics",
+                "description": "124 indicators covering: climate (temperature, rainfall, heat/cold waves, cyclones), water resources (wetlands, watersheds, rivers, groundwater, reservoirs, water quality), land (soil types, degradation, land use/cover), forests (area, cover, fire, carbon stock, tree cover), biodiversity (faunal diversity including global species counts by phylum—mammals, birds, reptiles, fish, etc., plant status), minerals, energy (coal/lignite reserves, power generation), agriculture (crops, fertilizers, pesticides, organic farming, livestock), pollution (air quality, noise, industrial clusters), waste (municipal, hazardous, biomedical, sewage), natural disasters (earthquakes, extreme events, deaths, government expenditure), water/sanitation access, transport, disease outbreaks, and environmental expenditure (government + corporate CSR).",
+                "use_for": "Climate, biodiversity, species counts, water resources, forests, land use, pollution, waste, natural disasters, environmental health"
+            },
+            "RBI": {
+                "name": "RBI Statistics",
+                "description": "39 indicators on external sector: foreign trade (direction by country, commodity exports/imports in USD/INR), balance of payments (overall BoP, invisibles, key components—quarterly and annual), external debt, forex reserves, NRI deposits, and exchange rates (155 currencies, SDR, monthly averages, highs/lows, forward premia). Comprehensive for trade and currency analysis.",
+                "use_for": "Foreign trade, exports, imports, balance of payments, forex reserves, exchange rates, external debt, NRI deposits"
+            },
+            "NSS77": {
+                "name": "NSS77 (77th Round - Land & Livestock)",
+                "description": "33 indicators on agricultural households: land ownership and possession (by size class, leasing patterns), livestock holdings, farm economics (income, expenses, crop production, GVA), crop marketing (disposal agencies, MSP awareness, satisfaction levels), input usage (seeds, farming resources), agricultural loans and insurance (coverage, crop loss, claim status). Comprehensive rural livelihoods data.",
+                "use_for": "Agricultural households, land ownership, livestock, farm income, crop production, agricultural loans, crop insurance, MSP awareness"
+            },
+            "NSS78": {
+                "name": "NSS78 (78th Round - Living Conditions)",
+                "description": "14 indicators on household living standards: drinking water access (improved sources, piped supply), sanitation (exclusive latrines, handwashing facilities), digital connectivity (mobile phones, broadband, mass media), transport access, household assets, sources of finance, and migration patterns (reasons, income changes, usual residence). From 2020-21 survey.",
+                "use_for": "Household amenities, drinking water, sanitation, digital connectivity, migration, household assets, living standards"
+            },
         },
         "workflow": [
             "1. 1_know_about_mospi_api() → find dataset (MANDATORY first step)",
@@ -493,7 +634,7 @@ if __name__ == "__main__":
     log("="*75)
     log("Serving Indian Government Statistical Data")
     log("Framework: FastMCP 3.0 with OpenTelemetry")
-    log("Datasets: 7 (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY)")
+    log("Datasets: 13 (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI)")
     log("="*75)
 
     log("="*75)
