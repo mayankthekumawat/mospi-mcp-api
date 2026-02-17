@@ -32,6 +32,9 @@ class MoSPI:
             "RBI": "/api/rbi/getRbiRecords",
             "NSS77": "/api/nss-77/getNss77Records",
             "NSS78": "/api/nss-78/getNss78Records",
+            "CPIALRL": "/api/cpialrl/getCpialrlRecords",
+            "HCES": "/api/hces/getHcesRecords",
+            "TUS": "/api/tus/getTusRecords",
         }
 
     def get_data(self, dataset_name: str, params: Optional[Dict] = None) -> Dict[str, Any]:
@@ -738,6 +741,122 @@ class MoSPI:
         try:
             response = requests.get(
                 f"{self.base_url}/api/nss-78/getFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    # =========================================================================
+    # CPIALRL (CPI for Agricultural Labourers and Rural Labourers) Methods
+    # =========================================================================
+
+    def get_cpialrl_indicators(self) -> Dict[str, Any]:
+        """Fetch list of CPIALRL indicators from MoSPI API.
+
+        Returns 2 indicators: General Index and Group Index.
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/cpialrl/getCpialrlIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_cpialrl_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available CPIALRL filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code (1-2)
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/cpialrl/getCpialrlFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    # =========================================================================
+    # HCES (Household Consumption Expenditure Survey) Methods
+    # =========================================================================
+
+    def get_hces_indicators(self) -> Dict[str, Any]:
+        """Fetch list of HCES indicators from MoSPI API.
+
+        Returns 9 indicators covering MPCE, consumption patterns,
+        Gini coefficient, and expenditure by household type/social group.
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/hces/getHcesIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_hces_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available HCES filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code (1-9)
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/hces/getHcesFilterByIndicatorId",
+                params=params,
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    # =========================================================================
+    # TUS (Time Use Survey) Methods
+    # =========================================================================
+
+    def get_tus_indicators(self) -> Dict[str, Any]:
+        """Fetch list of TUS indicators from MoSPI API.
+
+        Returns 41 indicators covering time spent on paid/unpaid activities,
+        SNA/non-SNA activities, by gender, age, education, marital status, etc.
+        """
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/tus/getTusIndicatorList",
+                timeout=30
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException as e:
+            return {"error": str(e), "statusCode": False}
+
+    def get_tus_filters(self, indicator_code: int) -> Dict[str, Any]:
+        """Fetch available TUS filters for given indicator.
+
+        Args:
+            indicator_code: Indicator code (4-44)
+        """
+        params = {"indicator_code": indicator_code}
+
+        try:
+            response = requests.get(
+                f"{self.base_url}/api/tus/getTusFilterByIndicatorId",
                 params=params,
                 timeout=30
             )

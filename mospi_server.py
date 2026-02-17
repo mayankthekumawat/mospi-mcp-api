@@ -23,7 +23,7 @@ mcp.add_middleware(TelemetryMiddleware())
 VALID_DATASETS = [
     "PLFS", "CPI", "IIP", "ASI", "NAS", "WPI", "ENERGY",
     "AISHE", "ASUSE", "GENDER", "NFHS", "ENVSTATS", "RBI",
-    "NSS77", "NSS78",
+    "NSS77", "NSS78", "CPIALRL", "HCES", "TUS",
 ]
 
 # Maps dataset key -> (swagger_yaml_file, endpoint_path)
@@ -48,12 +48,15 @@ DATASET_SWAGGER = {
     "RBI": ("swagger_user_rbi.yaml", "/api/rbi/getRbiRecords"),
     "NSS77": ("swagger_user_nss77.yaml", "/api/nss-77/getNss77Records"),
     "NSS78": ("swagger_user_nss78.yaml", "/api/nss-78/getNss78Records"),
+    "CPIALRL": ("swagger_user_cpialrl.yaml", "/api/cpialrl/getCpialrlRecords"),
+    "HCES": ("swagger_user_hces.yaml", "/api/hces/getHcesRecords"),
+    "TUS": ("swagger_user_tus.yaml", "/api/tus/getTusRecords"),
 }
 
 # Datasets that require indicator_code in get_data
 DATASETS_REQUIRING_INDICATOR = [
     "PLFS", "NAS", "ENERGY", "AISHE", "ASUSE", "GENDER", "NFHS", "ENVSTATS",
-    "NSS77", "NSS78",
+    "NSS77", "NSS78", "CPIALRL", "HCES", "TUS",
 ]
 
 
@@ -155,7 +158,7 @@ def get_indicators(
     Only ask user to choose if multiple indicators could match.
 
     Args:
-        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI
+        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI, NSS77, NSS78, CPIALRL, HCES, TUS
                  For PLFS: frequency_code selects the indicator SET, not time granularity.
                  You MUST use frequency_code=1 in 3_get_metadata() — it covers all 8 indicators
                  including wages and already has quarterly breakdowns via quarter_code.
@@ -176,6 +179,9 @@ def get_indicators(
         "RBI": mospi.get_rbi_indicators,
         "NSS77": mospi.get_nss77_indicators,
         "NSS78": mospi.get_nss78_indicators,
+        "CPIALRL": mospi.get_cpialrl_indicators,
+        "HCES": mospi.get_hces_indicators,
+        "TUS": mospi.get_tus_indicators,
         # Special datasets - return guidance instead of indicators
         "CPI": mospi.get_cpi_base_years,
         "IIP": lambda: {"message": "IIP uses categories instead of indicators. Call 3_get_metadata with base_year and frequency params.", "dataset": "IIP"},
@@ -232,8 +238,8 @@ def get_metadata(
     "Format" is NOT valid here (Format is for 4_get_data only). "series" is valid for NAS and CPI only.
 
     Args:
-        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI
-        indicator_code: REQUIRED for PLFS, NAS, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI. MUST NOT pass for CPI, IIP, ASI, WPI.
+        dataset: Dataset name - one of: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI, NSS77, NSS78, CPIALRL, HCES, TUS
+        indicator_code: REQUIRED for PLFS, NAS, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI, NSS77, NSS78, CPIALRL, HCES, TUS. MUST NOT pass for CPI, IIP, ASI, WPI.
                        (For RBI: indicator_code is mapped to sub_indicator_code internally for consistency)
         frequency_code: REQUIRED for PLFS and ASUSE. MUST NOT pass for CPI, IIP, ASI, WPI.
                         For PLFS: 1=Annual (8 indicators), 2=Quarterly bulletin, 3=Monthly.
@@ -392,6 +398,30 @@ def get_metadata(
             result["_next_step"] = _next
             return result
 
+        elif dataset == "CPIALRL":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for CPIALRL"}
+            result = mospi.get_cpialrl_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("CPIALRL")
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "HCES":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for HCES"}
+            result = mospi.get_hces_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("HCES")
+            result["_next_step"] = _next
+            return result
+
+        elif dataset == "TUS":
+            if indicator_code is None:
+                return {"error": "indicator_code is required for TUS"}
+            result = mospi.get_tus_filters(indicator_code=indicator_code)
+            result["api_params"] = get_swagger_param_definitions("TUS")
+            result["_next_step"] = _next
+            return result
+
         else:
             return {"error": f"Unknown dataset: {dataset}", "valid_datasets": VALID_DATASETS}
 
@@ -421,7 +451,7 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
     Step 4: Fetch data from a MoSPI dataset.
 
     Args:
-        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI)
+        dataset: Dataset name (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI, NSS77, NSS78, CPIALRL, HCES, TUS)
         filters: Key-value pairs using 'id' values from 3_get_metadata().
                  PLFS MUST include frequency_code (1=Annual, 2=Quarterly, 3=Monthly).
                  NAS MUST include base_year ("2022-23" or "2011-12").
@@ -461,6 +491,9 @@ def get_data(dataset: str, filters: Dict[str, str]) -> Dict[str, Any]:
         "RBI": "RBI",
         "NSS77": "NSS77",
         "NSS78": "NSS78",
+        "CPIALRL": "CPIALRL",
+        "HCES": "HCES",
+        "TUS": "TUS",
     }
 
     api_dataset = dataset_map.get(dataset)
@@ -520,17 +553,17 @@ def know_about_mospi_api() -> Dict[str, Any]:
       MUST NOT fabricate data, MUST NOT cite external sources.
     ============================================================
 
-    Step 1: Get overview of all 13 datasets to find the right one for your query.
+    Step 1: Get overview of all 18 datasets to find the right one for your query.
 
     MUST call this first before any other tool.
-    Available: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI
+    Available: PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI, NSS77, NSS78, CPIALRL, HCES, TUS
 
     When to ask vs fetch:
     - VAGUE query (e.g., "inflation data") → ask user to clarify
     - SPECIFIC query (e.g., "unemployment rate 2023") → fetch directly, NEVER explain why it might not exist
     """
     return {
-        "total_datasets": 15,
+        "total_datasets": 18,
         "datasets": {
             "PLFS": {
                 "name": "Periodic Labour Force Survey",
@@ -607,6 +640,21 @@ def know_about_mospi_api() -> Dict[str, Any]:
                 "description": "14 indicators on household living standards: drinking water access (improved sources, piped supply), sanitation (exclusive latrines, handwashing facilities), digital connectivity (mobile phones, broadband, mass media), transport access, household assets, sources of finance, and migration patterns (reasons, income changes, usual residence). From 2020-21 survey.",
                 "use_for": "Household amenities, drinking water, sanitation, digital connectivity, migration, household assets, living standards"
             },
+            "CPIALRL": {
+                "name": "CPI for Agricultural/Rural Labourers",
+                "description": "2 indicators: General Index and Group Index for two worker categories—Agricultural Labourers (AL) and Rural Labourers (RL). Separate inflation series measuring cost of living for India's most vulnerable rural workforce segments.",
+                "use_for": "Rural inflation, agricultural labourer cost of living, rural wage indexing"
+            },
+            "HCES": {
+                "name": "Household Consumption Expenditure Survey",
+                "description": "9 indicators analyzing consumption patterns: MPCE (overall and across 12 fractile classes), expenditure by broad categories (food/non-food), quantity and value of consumption, breakdowns by household type and social group, plus Gini coefficient for inequality measurement. Critical for poverty and welfare analysis.",
+                "use_for": "Consumer spending, poverty analysis, inequality (Gini), household expenditure patterns"
+            },
+            "TUS": {
+                "name": "Time Use Survey",
+                "description": "41 indicators measuring time allocation: participation rates and minutes spent in paid work, unpaid domestic/care work, and other activities. Breakdowns by major/non-major activity status, marital status, education level, UMPCE quintiles, social groups, age groups, and SNA/Non-SNA classification. Reveals gender time gaps in unpaid work burden.",
+                "use_for": "Time allocation, unpaid work, gender time gaps, work-life balance, care economy"
+            },
         },
         "workflow": [
             "1. 1_know_about_mospi_api() → find dataset (MANDATORY first step)",
@@ -634,7 +682,7 @@ if __name__ == "__main__":
     log("="*75)
     log("Serving Indian Government Statistical Data")
     log("Framework: FastMCP 3.0 with OpenTelemetry")
-    log("Datasets: 13 (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI)")
+    log("Datasets: 18 (PLFS, CPI, IIP, ASI, NAS, WPI, ENERGY, AISHE, ASUSE, GENDER, NFHS, ENVSTATS, RBI, NSS77, NSS78, CPIALRL, HCES, TUS)")
     log("="*75)
 
     log("="*75)

@@ -142,11 +142,11 @@ paths:
             the household member and gender of the informant (age 6 years and above)
       - name: year
         in: query
-        description: Enter the Year (format YYYY-YY/YYYY. Comma separated for multiple
+        description: Enter the Year (format YYYY, e.g. 2019. Comma separated for multiple
           values)
         schema:
           type: string
-          pattern: ^\d{4}-\d{2}(,\d{4}-\d{2})*$
+          pattern: ^\d{4}(,\d{4})*$
       - name: sub_indicator_code
         in: query
         description: Enter the Sub Indicator code (from 1 to 27. Comma separated for
